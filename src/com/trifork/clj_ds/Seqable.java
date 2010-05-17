@@ -12,6 +12,6 @@
 
 package com.trifork.clj_ds;
 
-public interface Seqable {
-    ISeq seq();
+public interface Seqable<T> {
+    ISeq<T> seq();
 }

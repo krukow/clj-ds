@@ -12,9 +12,9 @@
 
 package com.trifork.clj_ds;
 
-public interface ITransientVector extends ITransientAssociative, Indexed{
+public interface ITransientVector<T> extends ITransientAssociative<T>, Indexed<T>{
 
-ITransientVector assocN(int i, Object val);
+ITransientVector<T> assocN(int i, T val);
 
-ITransientVector pop();
+ITransientVector<T> pop();
 }

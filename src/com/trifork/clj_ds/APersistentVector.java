@@ -13,11 +13,15 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.RandomAccess;
 
-public abstract class APersistentVector extends AFn implements IPersistentVector, Iterable,
-                                                               List,
-                                                               RandomAccess, Comparable,
+public abstract class APersistentVector<T> extends AFn implements IPersistentVector<T>, Iterable<T>,
+                                                               List<T>,
+                                                               RandomAccess, Comparable<T>,
                                                                Serializable {
 int _hash = -1;
 
@@ -25,15 +29,15 @@ public String toString(){
 	return RT.printString(this);
 }
 
-public ISeq seq(){
+public ISeq<T> seq(){
 	if(count() > 0)
-		return new Seq(this, 0);
+		return new Seq<T>(this, 0);
 	return null;
 }
 
-public ISeq rseq(){
+public ISeq<T> rseq(){
 	if(count() > 0)
-		return new RSeq(this, count() - 1);
+		return new RSeq<T>(this, count() - 1);
 	return null;
 }
 
@@ -152,17 +156,17 @@ public int hashCode(){
 	return _hash;
 }
 
-public Object get(int index){
+public T get(int index){
 	return nth(index);
 }
 
-public Object nth(int i, Object notFound){
+public T nth(int i, T notFound){
 	if(i >= 0 && i < count())
 		return nth(i);
 	return notFound;
 }
 
-public Object remove(int i){
+public T remove(int i){
 	throw new UnsupportedOperationException();
 }
 
@@ -180,19 +184,19 @@ public int lastIndexOf(Object o){
 	return -1;
 }
 
-public ListIterator listIterator(){
+public ListIterator<T> listIterator(){
 	return listIterator(0);
 }
 
-public ListIterator listIterator(final int index){
-	return new ListIterator(){
+public ListIterator<T> listIterator(final int index){
+	return new ListIterator<T>(){
 		int nexti = index;
 
 		public boolean hasNext(){
 			return nexti < count();
 		}
 
-		public Object next(){
+		public T next(){
 			return nth(nexti++);
 		}
 
@@ -200,7 +204,7 @@ public ListIterator listIterator(final int index){
 			return nexti > 0;
 		}
 
-		public Object previous(){
+		public T previous(){
 			return nth(--nexti);
 		}
 
@@ -226,16 +230,17 @@ public ListIterator listIterator(final int index){
 	};
 }
 
-public List subList(int fromIndex, int toIndex){
-	return (List) RT.subvec(this, fromIndex, toIndex);
+@SuppressWarnings("unchecked")
+public List<T> subList(int fromIndex, int toIndex){
+	return (List<T>) RT.subvec(this, fromIndex, toIndex);
 }
 
 
-public Object set(int i, Object o){
+public T set(int i, T o){
 	throw new UnsupportedOperationException();
 }
 
-public void add(int i, Object o){
+public void add(int i, T o){
 	throw new UnsupportedOperationException();
 }
 
@@ -250,16 +255,16 @@ public Object invoke(Object arg1) throws Exception{
 	throw new IllegalArgumentException("Key must be integer");
 }
 
-public Iterator iterator(){
+public Iterator<T> iterator(){
 	//todo - something more efficient
-	return new Iterator(){
+	return new Iterator<T>(){
 		int i = 0;
 
 		public boolean hasNext(){
 			return i < count();
 		}
 
-		public Object next(){
+		public T next(){
 			return nth(i++);
 		}
 
@@ -269,7 +274,7 @@ public Iterator iterator(){
 	};
 }
 
-public Object peek(){
+public T peek(){
 	if(count() > 0)
 		return nth(count() - 1);
 	return null;
@@ -282,17 +287,17 @@ public boolean containsKey(Object key){
 	return i >= 0 && i < count();
 }
 
-public IMapEntry entryAt(Object key){
+public IMapEntry<Object, T> entryAt(Object key){
 	if(Util.isInteger(key))
 		{
 		int i = ((Number) key).intValue();
 		if(i >= 0 && i < count())
-			return new MapEntry(key, nth(i));
+			return new MapEntry<Object,T>(key, nth(i));
 		}
 	return null;
 }
 
-public IPersistentVector assoc(Object key, Object val){
+public IPersistentVector<T> assoc(Object key, T val){
 	if(Util.isInteger(key))
 		{
 		int i = ((Number) key).intValue();
@@ -301,7 +306,7 @@ public IPersistentVector assoc(Object key, Object val){
 	throw new IllegalArgumentException("Key must be integer");
 }
 
-public Object valAt(Object key, Object notFound){
+public T valAt(Object key, T notFound){
 	if(Util.isInteger(key))
 		{
 		int i = ((Number) key).intValue();
@@ -311,7 +316,7 @@ public Object valAt(Object key, Object notFound){
 	return notFound;
 }
 
-public Object valAt(Object key){
+public T valAt(Object key){
 	return valAt(key, null);
 }
 
@@ -321,7 +326,7 @@ public Object[] toArray(){
 	return RT.seqToArray(seq());
 }
 
-public boolean add(Object o){
+public boolean add(T o){
 	throw new UnsupportedOperationException();
 }
 
@@ -406,30 +411,30 @@ public int compareTo(Object o){
 	return 0;
 }
 
-    static class Seq extends ASeq implements IndexedSeq, IReduce{
+    static class Seq<T> extends ASeq<T> implements IndexedSeq<T>, IReduce{
 	//todo - something more efficient
-	final IPersistentVector v;
+	final IPersistentVector<T> v;
 	final int i;
 
 
-	public Seq(IPersistentVector v, int i){
+	public Seq(IPersistentVector<T> v, int i){
 		this.v = v;
 		this.i = i;
 	}
 
-	Seq(IPersistentMap meta, IPersistentVector v, int i){
+	Seq(IPersistentMap meta, IPersistentVector<T> v, int i){
 		super(meta);
 		this.v = v;
 		this.i = i;
 	}
 
-	public Object first(){
+	public T first(){
 		return v.nth(i);
 	}
 
-	public ISeq next(){
+	public ISeq<T> next(){
 		if(i + 1 < v.count())
-			return new APersistentVector.Seq(v, i + 1);
+			return new APersistentVector.Seq<T>(v, i + 1);
 		return null;
 	}
 
@@ -441,8 +446,8 @@ public int compareTo(Object o){
 		return v.count() - i;
 	}
 
-	public APersistentVector.Seq withMeta(IPersistentMap meta){
-		return new APersistentVector.Seq(meta, v, i);
+	public APersistentVector.Seq<T> withMeta(IPersistentMap meta){
+		return new APersistentVector.Seq<T>(meta, v, i);
 	}
 
 	public Object reduce(IFn f) throws Exception{
@@ -460,28 +465,28 @@ public int compareTo(Object o){
 	}
     }
 
-public static class RSeq extends ASeq implements IndexedSeq, Counted{
-	final IPersistentVector v;
+public static class RSeq<T> extends ASeq<T> implements IndexedSeq<T>, Counted{
+	final IPersistentVector<T> v;
 	final int i;
 
-	public RSeq(IPersistentVector vector, int i){
+	public RSeq(IPersistentVector<T> vector, int i){
 		this.v = vector;
 		this.i = i;
 	}
 
-	RSeq(IPersistentMap meta, IPersistentVector v, int i){
+	RSeq(IPersistentMap meta, IPersistentVector<T> v, int i){
 		super(meta);
 		this.v = v;
 		this.i = i;
 	}
 
-	public Object first(){
+	public T first(){
 		return v.nth(i);
 	}
 
-	public ISeq next(){
+	public ISeq<T> next(){
 		if(i > 0)
-			return new APersistentVector.RSeq(v, i - 1);
+			return new APersistentVector.RSeq<T>(v, i - 1);
 		return null;
 	}
 
@@ -493,20 +498,21 @@ public static class RSeq extends ASeq implements IndexedSeq, Counted{
 		return i + 1;
 	}
 
-	public APersistentVector.RSeq withMeta(IPersistentMap meta){
-		return new APersistentVector.RSeq(meta, v, i);
+	public APersistentVector.RSeq<T> withMeta(IPersistentMap meta){
+		return new APersistentVector.RSeq<T>(meta, v, i);
 	}
 }
 
-static class SubVector extends APersistentVector implements IObj{
-	final IPersistentVector v;
+static class SubVector<T> extends APersistentVector<T> implements IObj{
+	final IPersistentVector<T> v;
 	final int start;
 	final int end;
 	final IPersistentMap _meta;
 
 
 
-	public SubVector(IPersistentMap meta, IPersistentVector v, int start, int end){
+	@SuppressWarnings("unchecked")
+	public SubVector(IPersistentMap meta, IPersistentVector<T> v, int start, int end){
 		this._meta = meta;
 
 		if(v instanceof APersistentVector.SubVector)
@@ -521,44 +527,46 @@ static class SubVector extends APersistentVector implements IObj{
 		this.end = end;
 	}
 
-	public Object nth(int i){
+	public T nth(int i){
 		if(start + i >= end)
 			throw new IndexOutOfBoundsException();
 		return v.nth(start + i);
 	}
 
-	public IPersistentVector assocN(int i, Object val){
+	public IPersistentVector<T> assocN(int i, T val){
 		if(start + i > end)
 			throw new IndexOutOfBoundsException();
 		else if(start + i == end)
 			return cons(val);
-		return new SubVector(_meta, v.assocN(start + i, val), start, end);
+		return new SubVector<T>(_meta, v.assocN(start + i, val), start, end);
 	}
 
 	public int count(){
 		return end - start;
 	}
 
-	public IPersistentVector cons(Object o){
-		return new SubVector(_meta, v.assocN(end, o), start, end + 1);
+	public IPersistentVector<T> cons(T o){
+		return new SubVector<T>(_meta, v.assocN(end, o), start, end + 1);
 	}
 
-	public IPersistentCollection empty(){
+	@SuppressWarnings("unchecked")
+	public IPersistentCollection<T> empty(){
 		return PersistentVector.EMPTY.withMeta(meta());
 	}
 
-	public IPersistentStack pop(){
+	@SuppressWarnings("unchecked")
+	public IPersistentStack<T> pop(){
 		if(end - 1 == start)
 			{
 			return PersistentVector.EMPTY;
 			}
-		return new SubVector(_meta, v, start, end - 1);
+		return new SubVector<T>(_meta, v, start, end - 1);
 	}
 
-	public SubVector withMeta(IPersistentMap meta){
+	public SubVector<T> withMeta(IPersistentMap meta){
 		if(meta == _meta)
 			return this;
-		return new SubVector(meta, v, start, end);
+		return new SubVector<T>(meta, v, start, end);
 	}
 
 	public IPersistentMap meta(){

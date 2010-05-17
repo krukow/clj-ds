@@ -12,8 +12,8 @@
 
 package com.trifork.clj_ds;
 
-public interface IPersistentStack extends IPersistentCollection{
-Object peek();
+public interface IPersistentStack<T> extends IPersistentCollection<T>{
+T peek();
 
-IPersistentStack pop();
+IPersistentStack<T> pop();
 }

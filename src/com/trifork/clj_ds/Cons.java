@@ -13,35 +13,36 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
+import java.util.Collection;
 
-final public class Cons extends ASeq implements Serializable {
+final public class Cons<T> extends ASeq<T> implements Serializable {
 
-private final Object _first;
-private final ISeq _more;
+private final T _first;
+private final ISeq<T> _more;
 
-public Cons(Object first, ISeq _more){
+public Cons(T first, ISeq<T> _more){
 	this._first = first;
 	this._more = _more;
 }
 
 
-public Cons(IPersistentMap meta, Object _first, ISeq _more){
+public Cons(IPersistentMap meta, T _first, ISeq<T> _more){
 	super(meta);
 	this._first = _first;
 	this._more = _more;
 }
 
-public Object first(){
+public T first(){
 	return _first;
 }
 
-public ISeq next(){
+public ISeq<T> next(){
 	return more().seq();
 }
 
-public ISeq more(){
+public ISeq<T> more(){
 	if(_more == null)
-		return PersistentList.EMPTY;
+		return (ISeq<T>) PersistentList.emptyList();
 	return _more;
 }
 
@@ -49,7 +50,9 @@ public int count(){
 	return 1 + RT.count(_more);
 }
 
-public Cons withMeta(IPersistentMap meta){
-	return new Cons(meta, _first, _more);
+public Cons<T> withMeta(IPersistentMap meta){
+	return new Cons<T>(meta, _first, _more);
 }
+
+
 }

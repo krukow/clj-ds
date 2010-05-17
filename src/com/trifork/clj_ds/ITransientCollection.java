@@ -12,9 +12,9 @@
 
 package com.trifork.clj_ds;
 
-public interface ITransientCollection{
+public interface ITransientCollection<T>{
 
-ITransientCollection conj(Object val);
+ITransientCollection<T> conj(T val);
 
-IPersistentCollection persistent();
+IPersistentCollection<T> persistent();
 }

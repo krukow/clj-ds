@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PersistentVector extends APersistentVector implements IObj, IEditableCollection{
+public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>{
 
 static class Node implements Serializable {
 	transient final AtomicReference<Thread> edit;
@@ -45,23 +45,23 @@ final IPersistentMap _meta;
 
 public final static PersistentVector EMPTY = new PersistentVector(0, 5, EMPTY_NODE, new Object[]{});
 
-static public PersistentVector create(ISeq items){
-	TransientVector ret = EMPTY.asTransient();
+static public <T> PersistentVector<T> create(ISeq<? extends T> items){
+	TransientVector<T> ret = EMPTY.asTransient();
 	for(; items != null; items = items.next())
 		ret = ret.conj(items.first());
 	return ret.persistent();
 }
 
-static public PersistentVector create(List items){
-	TransientVector ret = EMPTY.asTransient();
-	for(Object item : items)
+static public <T> PersistentVector<T> create(List<? extends T> items){
+	TransientVector<T> ret = EMPTY.asTransient();
+	for(T item : items)
 		ret = ret.conj(item);
 	return ret.persistent();
 }
 
-static public PersistentVector create(Object... items){
-	TransientVector ret = EMPTY.asTransient();
-	for(Object item : items)
+static public <T> PersistentVector<T> create(T ... items){
+	TransientVector<T> ret = EMPTY.asTransient();
+	for(T item : items)
 		ret = ret.conj(item);
 	return ret.persistent();
 }
@@ -83,8 +83,8 @@ PersistentVector(IPersistentMap meta, int cnt, int shift, Node root, Object[] ta
 	this.tail = tail;
 }
 
-public TransientVector asTransient(){
-	return new TransientVector(this);
+public TransientVector<T> asTransient(){
+	return new TransientVector<T>(this);
 }
 
 final int tailoff(){
@@ -106,18 +106,18 @@ public Object[] arrayFor(int i){
 	throw new IndexOutOfBoundsException();
 }
 
-public Object nth(int i){
+public T nth(int i){
 	Object[] node = arrayFor(i);
-	return node[i & 0x01f];
+	return (T) node[i & 0x01f];
 }
 
-public Object nth(int i, Object notFound){
+public T nth(int i, T notFound){
 	if(i >= 0 && i < cnt)
 		return nth(i);
 	return notFound;
 }
 
-public PersistentVector assocN(int i, Object val){
+public PersistentVector<T> assocN(int i, T val){
 	if(i >= 0 && i < cnt)
 		{
 		if(i >= tailoff())
@@ -126,13 +126,13 @@ public PersistentVector assocN(int i, Object val){
 			System.arraycopy(tail, 0, newTail, 0, tail.length);
 			newTail[i & 0x01f] = val;
 
-			return new PersistentVector(meta(), cnt, shift, root, newTail);
+			return new PersistentVector<T>(meta(), cnt, shift, root, newTail);
 			}
 
-		return new PersistentVector(meta(), cnt, shift, doAssoc(shift, root, i, val), tail);
+		return new PersistentVector<T>(meta(), cnt, shift, doAssoc(shift, root, i, val), tail);
 		}
 	if(i == cnt)
-		return cons(val);
+		return cons(val);	
 	throw new IndexOutOfBoundsException();
 }
 
@@ -154,8 +154,8 @@ public int count(){
 	return cnt;
 }
 
-public PersistentVector withMeta(IPersistentMap meta){
-	return new PersistentVector(meta, cnt, shift, root, tail);
+public PersistentVector<T> withMeta(IPersistentMap meta){
+	return new PersistentVector<T>(meta, cnt, shift, root, tail);
 }
 
 public IPersistentMap meta(){
@@ -163,7 +163,7 @@ public IPersistentMap meta(){
 }
 
 
-public PersistentVector cons(Object val){
+public PersistentVector<T> cons(T val){
 	int i = cnt;
 	//room in tail?
 //	if(tail.length < 32)
@@ -172,7 +172,7 @@ public PersistentVector cons(Object val){
 		Object[] newTail = new Object[tail.length + 1];
 		System.arraycopy(tail, 0, newTail, 0, tail.length);
 		newTail[tail.length] = val;
-		return new PersistentVector(meta(), cnt + 1, shift, root, newTail);
+		return new PersistentVector<T>(meta(), cnt + 1, shift, root, newTail);
 		}
 	//full tail, push into tree
 	Node newroot;
@@ -188,7 +188,7 @@ public PersistentVector cons(Object val){
 		}
 	else
 		newroot = pushTail(shift, root, tailnode);
-	return new PersistentVector(meta(), cnt + 1, newshift, newroot, new Object[]{val});
+	return new PersistentVector<T>(meta(), cnt + 1, newshift, newroot, new Object[]{val});
 }
 
 private Node pushTail(int level, Node parent, Node tailnode){
@@ -222,31 +222,31 @@ private static Node newPath(AtomicReference<Thread> edit,int level, Node node){
 	return ret;
 }
 
-public IChunkedSeq chunkedSeq(){
+public IChunkedSeq<T> chunkedSeq(){
 	if(count() == 0)
 		return null;
-	return new ChunkedSeq(this,0,0);
+	return new ChunkedSeq<T>(this,0,0);
 }
 
-public ISeq seq(){
+public ISeq<T> seq(){
 	return chunkedSeq();
 }
 
-static public final class ChunkedSeq extends ASeq implements IChunkedSeq{
+static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T>{
 
-	public final PersistentVector vec;
+	public final PersistentVector<T> vec;
 	final Object[] node;
 	final int i;
 	public final int offset;
 
-	public ChunkedSeq(PersistentVector vec, int i, int offset){
+	public ChunkedSeq(PersistentVector<T> vec, int i, int offset){
 		this.vec = vec;
 		this.i = i;
 		this.offset = offset;
 		this.node = vec.arrayFor(i);
 	}
 
-	ChunkedSeq(IPersistentMap meta, PersistentVector vec, Object[] node, int i, int offset){
+	ChunkedSeq(IPersistentMap meta, PersistentVector<T> vec, Object[] node, int i, int offset){
 		super(meta);
 		this.vec = vec;
 		this.node = node;
@@ -254,27 +254,27 @@ static public final class ChunkedSeq extends ASeq implements IChunkedSeq{
 		this.offset = offset;
 	}
 
-	ChunkedSeq(PersistentVector vec, Object[] node, int i, int offset){
+	ChunkedSeq(PersistentVector<T> vec, Object[] node, int i, int offset){
 		this.vec = vec;
 		this.node = node;
 		this.i = i;
 		this.offset = offset;
 	}
 
-	public IChunk chunkedFirst() throws Exception{
-		return new ArrayChunk(node, offset);
+	public IChunk<T> chunkedFirst() throws Exception{
+		return new ArrayChunk<T>(node, offset);
 		}
 
-	public ISeq chunkedNext(){
+	public ISeq<T> chunkedNext(){
 		if(i + node.length < vec.cnt)
-			return new ChunkedSeq(vec,i+ node.length,0);
+			return new ChunkedSeq<T>(vec,i+ node.length,0);
 		return null;
 		}
 
-	public ISeq chunkedMore(){
-		ISeq s = chunkedNext();
+	public ISeq<T> chunkedMore(){
+		ISeq<T> s = chunkedNext();
 		if(s == null)
-			return PersistentList.EMPTY;
+			return (ISeq<T>) PersistentList.emptyList();
 		return s;
 	}
 
@@ -284,18 +284,18 @@ static public final class ChunkedSeq extends ASeq implements IChunkedSeq{
 		return new ChunkedSeq(meta, vec, node, i, offset);
 	}
 
-	public Object first(){
-		return node[offset];
+	public T first(){
+		return (T) node[offset];
 	}
 
-	public ISeq next(){
+	public ISeq<T> next(){
 		if(offset + 1 < node.length)
-			return new ChunkedSeq(vec, node, i, offset + 1);
+			return new ChunkedSeq<T>(vec, node, i, offset + 1);
 		return chunkedNext();
 	}
 }
 
-public IPersistentCollection empty(){
+public IPersistentCollection<T> empty(){
 	return EMPTY.withMeta(meta());
 }
 
@@ -330,7 +330,7 @@ public IPersistentCollection empty(){
 //	return ret;
 //}
 
-public PersistentVector pop(){
+public PersistentVector<T> pop(){
 	if(cnt == 0)
 		throw new IllegalStateException("Can't pop empty vector");
 	if(cnt == 1)
@@ -340,7 +340,7 @@ public PersistentVector pop(){
 		{
 		Object[] newTail = new Object[tail.length - 1];
 		System.arraycopy(tail, 0, newTail, 0, newTail.length);
-		return new PersistentVector(meta(), cnt - 1, shift, root, newTail);
+		return new PersistentVector<T>(meta(), cnt - 1, shift, root, newTail);
 		}
 	Object[] newtail = arrayFor(cnt - 2);
 
@@ -355,7 +355,7 @@ public PersistentVector pop(){
 		newroot = (Node) newroot.array[0];
 		newshift -= 5;
 		}
-	return new PersistentVector(meta(), cnt - 1, newshift, newroot, newtail);
+	return new PersistentVector<T>(meta(), cnt - 1, newshift, newroot, newtail);
 }
 
 private Node popTail(int level, Node node){
@@ -382,7 +382,7 @@ private Node popTail(int level, Node node){
 		}
 }
 
-static final class TransientVector extends AFn implements ITransientVector, Counted{
+static final class TransientVector<T> extends AFn implements ITransientVector<T>, Counted{
 	int cnt;
 	int shift;
 	Node root;
@@ -395,7 +395,7 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		this.tail = tail;
 	}
 
-	TransientVector(PersistentVector v){
+	TransientVector(PersistentVector<? extends T> v){
 		this(v.cnt, v.shift, editableRoot(v.root), editableTail(v.tail));
 	}
 
@@ -426,7 +426,7 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		return new Node(new AtomicReference<Thread>(Thread.currentThread()), node.array.clone());
 	}
 
-	public PersistentVector persistent(){
+	public PersistentVector<T> persistent(){
 		ensureEditable();
 //		Thread owner = root.edit.get();
 //		if(owner != null && owner != Thread.currentThread())
@@ -436,7 +436,7 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		root.edit.set(null);
 		Object[] trimmedTail = new Object[cnt-tailoff()];
 		System.arraycopy(tail,0,trimmedTail,0,trimmedTail.length);
-		return new PersistentVector(cnt, shift, root, trimmedTail);
+		return new PersistentVector<T>(cnt, shift, root, trimmedTail);
 	}
 
 	static Object[] editableTail(Object[] tl){
@@ -445,7 +445,7 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		return ret;
 	}
 
-	public TransientVector conj(Object val){
+	public TransientVector<T> conj(T val){
 		ensureEditable();
 		int i = cnt;
 		//room in tail?
@@ -543,19 +543,19 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		throw new IllegalArgumentException("Key must be integer");
 	}
 
-	public Object nth(int i){
+	public T nth(int i){
 		ensureEditable();
 		Object[] node = arrayFor(i);
-		return node[i & 0x01f];
+		return (T) node[i & 0x01f];
 	}
 
-	public Object nth(int i, Object notFound){
+	public T nth(int i, T notFound){
 		if(i >= 0 && i < count())
 			return nth(i);
 		return notFound;
 	}
 
-	public TransientVector assocN(int i, Object val){
+	public TransientVector<T> assocN(int i, T val){
 		ensureEditable();
 		if(i >= 0 && i < cnt)
 			{
@@ -573,7 +573,7 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		throw new IndexOutOfBoundsException();
 	}
 
-	public TransientVector assoc(Object key, Object val){
+	public TransientVector<T> assoc(Object key, T val){
 		//note - relies on ensureEditable in assocN
 		if(Util.isInteger(key))
 			{
@@ -598,7 +598,7 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 		return ret;
 	}
 
-	public TransientVector pop(){
+	public TransientVector<T> pop(){
 		ensureEditable();
 		if(cnt == 0)
 			throw new IllegalStateException("Can't pop empty vector");
@@ -659,6 +659,8 @@ static final class TransientVector extends AFn implements ITransientVector, Coun
 			return ret;
 			}
 	}
+
+	
 }
 /*
 static public void main(String[] args){

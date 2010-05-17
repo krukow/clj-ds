@@ -12,8 +12,8 @@
 
 package com.trifork.clj_ds;
 
-public interface Indexed extends Counted{
-Object nth(int i);
+public interface Indexed<T> extends Counted{
+T nth(int i);
 
-Object nth(int i, Object notFound);
+T nth(int i, T notFound);
 }

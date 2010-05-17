@@ -12,8 +12,8 @@ package com.trifork.clj_ds;
 
 import java.util.Map;
 
-public interface IMapEntry extends Map.Entry{
-Object key();
+public interface IMapEntry<K,V> extends Map.Entry<K,V>{
+K key();
 
-Object val();
+V val();
 }

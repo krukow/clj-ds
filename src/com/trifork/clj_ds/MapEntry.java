@@ -10,30 +10,29 @@
 
 package com.trifork.clj_ds;
 
-import java.util.Iterator;
 
-public class MapEntry extends AMapEntry{
-final Object _key;
-final Object _val;
+public class MapEntry<K,V> extends AMapEntry<K,V>{
+final K _key;
+final V _val;
 
-public MapEntry(Object key, Object val){
+public MapEntry(K key, V val){
 	this._key = key;
 	this._val = val;
 }
 
-public Object key(){
+public K key(){
 	return _key;
 }
 
-public Object val(){
+public V val(){
 	return _val;
 }
 
-public Object getKey(){
+public K getKey(){
 	return key();
 }
 
-public Object getValue(){
+public V getValue(){
 	return val();
 }
 

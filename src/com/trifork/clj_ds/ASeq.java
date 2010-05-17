@@ -13,16 +13,21 @@ package com.trifork.clj_ds;
 import java.io.Serializable;
 import java.util.*;
 
-public abstract class ASeq extends Obj implements ISeq, List, Serializable {
+public abstract class ASeq<T> extends Obj implements ISeq<T>, List<T>, Serializable {
 transient int _hash = -1;
+
+
+
+@Override
+public IPersistentCollection<T> empty() {
+	return PersistentList.emptyList();
+}
+
 
 public String toString(){
 	return RT.printString(this);
 }
 
-public IPersistentCollection empty(){
-	return PersistentList.EMPTY;
-}
 
 protected ASeq(IPersistentMap meta){
 	super(meta);
@@ -104,18 +109,18 @@ public int count(){
 	return i;
 }
 
-final public ISeq seq(){
+final public ISeq<T> seq(){
 	return this;
 }
 
-public ISeq cons(Object o){
-	return new Cons(o, this);
+public ISeq<T> cons(T o){
+	return new Cons<T>(o, this);
 }
 
-public ISeq more(){
-    ISeq s = next();
+public ISeq<T> more(){
+    ISeq<T> s = next();
     if(s == null)
-        return PersistentList.EMPTY;
+        return (ISeq<T>) PersistentList.emptyList();
     return s;
 }
 
@@ -132,7 +137,7 @@ public Object[] toArray(){
 	return RT.seqToArray(seq());
 }
 
-public boolean add(Object o){
+public boolean add(T o){
 	throw new UnsupportedOperationException();
 }
 
@@ -206,19 +211,19 @@ public Iterator iterator(){
 
 
 //////////// List stuff /////////////////
-private List reify(){
-	return Collections.unmodifiableList(new ArrayList(this));
+private List<T> reify(){
+	return Collections.unmodifiableList(new ArrayList<T>(this));
 }
 
-public List subList(int fromIndex, int toIndex){
+public List<T> subList(int fromIndex, int toIndex){
 	return reify().subList(fromIndex, toIndex);
 }
 
-public Object set(int index, Object element){
+public T set(int index, T element){
 	throw new UnsupportedOperationException();
 }
 
-public Object remove(int index){
+public T remove(int index){
 	throw new UnsupportedOperationException();
 }
 
@@ -236,23 +241,23 @@ public int lastIndexOf(Object o){
 	return reify().lastIndexOf(o);
 }
 
-public ListIterator listIterator(){
+public ListIterator<T> listIterator(){
 	return reify().listIterator();
 }
 
-public ListIterator listIterator(int index){
+public ListIterator<T> listIterator(int index){
 	return reify().listIterator(index);
 }
 
-public Object get(int index){
-	return RT.nth(this, index);
+public T get(int index){
+	return (T) RT.nth(this, index);
 }
 
-public void add(int index, Object element){
+public void add(int index, T element){
 	throw new UnsupportedOperationException();
 }
 
-public boolean addAll(int index, Collection c){
+public boolean addAll(int index, Collection<? extends T> c){
 	throw new UnsupportedOperationException();
 }
 

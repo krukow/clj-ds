@@ -11,13 +11,13 @@ package com.trifork.clj_ds;
  */
 
 
-public interface IPersistentCollection extends Seqable {
+public interface IPersistentCollection<T> extends Seqable<T> {
 
 int count();
 
-IPersistentCollection cons(Object o);
+IPersistentCollection<T> cons(T o);
 
-IPersistentCollection empty();
+IPersistentCollection<T> empty();
 
 boolean equiv(Object o);
 }

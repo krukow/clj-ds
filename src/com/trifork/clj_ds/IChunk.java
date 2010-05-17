@@ -12,9 +12,9 @@
 
 package com.trifork.clj_ds;
 
-public interface IChunk extends Indexed{
+public interface IChunk<T> extends Indexed<T>{
 
-IChunk dropFirst();
+IChunk<T> dropFirst();
 
 Object reduce(IFn f, Object start) throws Exception;
 }

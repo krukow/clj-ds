@@ -11,6 +11,6 @@
 package com.trifork.clj_ds;
 
 
-public interface IPersistentList extends Sequential, IPersistentStack{
+public interface IPersistentList<T> extends Sequential, IPersistentStack<T>{
 
 }

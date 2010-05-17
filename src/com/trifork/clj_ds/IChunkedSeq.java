@@ -12,12 +12,12 @@
 
 package com.trifork.clj_ds;
 
-public interface IChunkedSeq extends ISeq{
+public interface IChunkedSeq<T> extends ISeq<T>{
 
-IChunk chunkedFirst() throws Exception;
+IChunk<T> chunkedFirst() throws Exception;
 
-ISeq chunkedNext() throws Exception;
+ISeq<T> chunkedNext() throws Exception;
 
-ISeq chunkedMore() throws Exception;
+ISeq<T> chunkedMore() throws Exception;
 
 }

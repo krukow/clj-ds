@@ -10,11 +10,11 @@ package com.trifork.clj_ds;
  * You must not remove this notice, or any other, from this software.
  */
 
-public interface IPersistentVector extends Associative, Sequential, IPersistentStack, Reversible, Indexed{
+public interface IPersistentVector<T> extends Sequential, IPersistentStack<T>, Reversible<T>, Indexed<T>{
 int length();
 
-IPersistentVector assocN(int i, Object val);
+IPersistentVector<T> assocN(int i, T val);
 
-IPersistentVector cons(Object o);
+IPersistentVector<T> cons(T o);
 
 }

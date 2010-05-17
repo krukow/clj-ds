@@ -1,5 +1,6 @@
 package com.trifork.clj_ds;
 
+
 /**
  * Copyright (c) Rich Hickey. All rights reserved.
  * The use and distribution terms for this software are covered by the
@@ -9,11 +10,11 @@ package com.trifork.clj_ds;
  * the terms of this license.
  * You must not remove this notice, or any other, from this software.
  */
-public interface Associative extends IPersistentCollection, ILookup{
-boolean containsKey(Object key);
+public interface Associative<K, V> extends IPersistentCollection<IMapEntry<K,V>>, ILookup<K,V>{
+boolean containsKey(K key);
 
-IMapEntry entryAt(Object key);
+IMapEntry<K,V> entryAt(K key);
 
-Associative assoc(Object key, Object val);
+Associative<K,V> assoc(K key, V val);
 
 }

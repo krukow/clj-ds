@@ -14,7 +14,7 @@ package com.trifork.clj_ds;
 
 import java.io.Serializable;
 
-public final class ArrayChunk implements IChunk, Serializable {
+public final class ArrayChunk<T> implements IChunk<T>, Serializable {
 
 final Object[] array;
 final int off;
@@ -34,11 +34,11 @@ public ArrayChunk(Object[] array, int off, int end){
 	this.end = end;
 }
 
-public Object nth(int i){
-	return array[off + i];
+public T nth(int i){
+	return (T) array[off + i];
 }
 
-public Object nth(int i, Object notFound){
+public T nth(int i, T notFound){
 	if(i >= 0 && i < count())
 		return nth(i);
 	return notFound;
@@ -48,10 +48,10 @@ public int count(){
 	return end - off;
 }
 
-public IChunk dropFirst(){
+public IChunk<T> dropFirst(){
 	if(off==end)
 		throw new IllegalStateException("dropFirst of empty chunk");
-	return new ArrayChunk(array, off + 1, end);
+	return new ArrayChunk<T>(array, off + 1, end);
 }
 
 public Object reduce(IFn f, Object start) throws Exception{

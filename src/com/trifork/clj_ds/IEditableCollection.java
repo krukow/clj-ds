@@ -12,6 +12,6 @@
 
 package com.trifork.clj_ds;
 
-public interface IEditableCollection{
-ITransientCollection asTransient();
+public interface IEditableCollection<T>{
+ITransientCollection<T> asTransient();
 }

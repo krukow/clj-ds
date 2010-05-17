@@ -12,7 +12,7 @@
 
 package com.trifork.clj_ds;
 
-public interface ITransientAssociative extends ITransientCollection, ILookup{
+public interface ITransientAssociative<T> extends ITransientCollection<T>, ILookup{
 
-ITransientAssociative assoc(Object key, Object val);
+ITransientAssociative assoc(Object key, T val);
 }

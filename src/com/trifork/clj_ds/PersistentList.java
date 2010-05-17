@@ -13,10 +13,10 @@ package com.trifork.clj_ds;
 import java.io.Serializable;
 import java.util.*;
 
-public class PersistentList extends ASeq implements IPersistentList, IReduce, List, Counted {
+public class PersistentList<T> extends ASeq<T> implements IPersistentList<T>, IReduce, List<T>, Counted {
 
-private final Object _first;
-private final IPersistentList _rest;
+private final T _first;
+private final IPersistentList<T> _rest;
 private final int _count;
 
 public static IFn creator = new RestFn(){
@@ -50,44 +50,48 @@ public static IFn creator = new RestFn(){
 
 final public static EmptyList EMPTY = new EmptyList(null);
 
-public PersistentList(Object first){
+public static final <T> IPersistentList<T> emptyList() {
+return (IPersistentList<T>) EMPTY;
+}
+
+public PersistentList(T first){
 	this._first = first;
 	this._rest = null;
 
 	this._count = 1;
 }
 
-PersistentList(IPersistentMap meta, Object _first, IPersistentList _rest, int _count){
+PersistentList(IPersistentMap meta, T _first, IPersistentList<T> _rest, int _count){
 	super(meta);
 	this._first = _first;
 	this._rest = _rest;
 	this._count = _count;
 }
 
-public static IPersistentList create(List init){
-	IPersistentList ret = EMPTY;
-	for(ListIterator i = init.listIterator(init.size()); i.hasPrevious();)
+public static <T> IPersistentList<T> create(List<? extends T> init){
+	IPersistentList<T> ret = emptyList();
+	for(ListIterator<? extends T> i = init.listIterator(init.size()); i.hasPrevious();)
 		{
 		ret = (IPersistentList) ret.cons(i.previous());
 		}
 	return ret;
 }
 
-public Object first(){
+public T first(){
 	return _first;
 }
 
-public ISeq next(){
+public ISeq<T> next(){
 	if(_count == 1)
 		return null;
 	return (ISeq) _rest;
 }
 
-public Object peek(){
+public T peek(){
 	return first();
 }
 
-public IPersistentList pop(){
+public IPersistentList<T> pop(){
 	if(_rest == null)
 		return EMPTY.withMeta(_meta);
 	return _rest;
@@ -97,17 +101,18 @@ public int count(){
 	return _count;
 }
 
-public PersistentList cons(Object o){
-	return new PersistentList(meta(), o, this, _count + 1);
+public PersistentList<T> cons(T o){
+	return new PersistentList<T>(meta(), o, this, _count + 1);
 }
 
-public IPersistentCollection empty(){
+
+public IPersistentCollection<T> empty(){
 	return EMPTY.withMeta(meta());
 }
 
-public PersistentList withMeta(IPersistentMap meta){
+public PersistentList<T> withMeta(IPersistentMap meta){
 	if(meta != _meta)
-		return new PersistentList(meta, _first, _rest, _count);
+		return new PersistentList<T>(meta, _first, _rest, _count);
 	return this;
 }
 
@@ -126,7 +131,7 @@ public Object reduce(IFn f, Object start) throws Exception{
 }
 
 
-    static class EmptyList extends Obj implements IPersistentList, List, ISeq, Counted{
+    static class EmptyList<T> extends Obj implements IPersistentList<T>, List<T>, ISeq<T>, Counted{
 
 	public int hashCode(){
 		return 1;
@@ -144,37 +149,37 @@ public Object reduce(IFn f, Object start) throws Exception{
 		super(meta);
 	}
 
-        public Object first() {
+        public T first() {
             return null;
         }
 
-        public ISeq next() {
+        public ISeq<T> next() {
             return null;
         }
 
-        public ISeq more() {
+        public ISeq<T> more() {
             return this;
         }
 
-        public PersistentList cons(Object o){
-		return new PersistentList(meta(), o, null, 1);
+        public PersistentList<T> cons(T o){
+		return new PersistentList<T>(meta(), o, null, 1);
 	}
 
-	public IPersistentCollection empty(){
+	public IPersistentCollection<T> empty(){
 		return this;
 	}
 
-	public EmptyList withMeta(IPersistentMap meta){
+	public EmptyList<T> withMeta(IPersistentMap meta){
 		if(meta != meta())
-			return new EmptyList(meta);
+			return new EmptyList<T>(meta);
 		return this;
 	}
 
-	public Object peek(){
+	public T peek(){
 		return null;
 	}
 
-	public IPersistentList pop(){
+	public IPersistentList<T> pop(){
 		throw new IllegalStateException("Can't pop empty list");
 	}
 
@@ -182,7 +187,7 @@ public Object reduce(IFn f, Object start) throws Exception{
 		return 0;
 	}
 
-	public ISeq seq(){
+	public ISeq<T> seq(){
 		return null;
 	}
 
@@ -199,14 +204,14 @@ public Object reduce(IFn f, Object start) throws Exception{
 		return false;
 	}
 
-	public Iterator iterator(){
-		return new Iterator(){
+	public Iterator<T> iterator(){
+		return new Iterator<T>(){
 
 			public boolean hasNext(){
 				return false;
 			}
 
-			public Object next(){
+			public T next(){
 				throw new NoSuchElementException();
 			}
 
@@ -220,7 +225,7 @@ public Object reduce(IFn f, Object start) throws Exception{
 		return RT.EMPTY_ARRAY;
 	}
 
-	public boolean add(Object o){
+	public boolean add(T o){
 		throw new UnsupportedOperationException();
 	}
 
@@ -228,7 +233,7 @@ public Object reduce(IFn f, Object start) throws Exception{
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean addAll(Collection collection){
+	public boolean addAll(Collection<? extends T> collection){
 		throw new UnsupportedOperationException();
 	}
 
@@ -255,19 +260,19 @@ public Object reduce(IFn f, Object start) throws Exception{
 	}
 
 	//////////// List stuff /////////////////
-	private List reify(){
-		return Collections.unmodifiableList(new ArrayList(this));
+	private List<T> reify(){
+		return Collections.unmodifiableList(new ArrayList<T>(this));
 	}
 
-	public List subList(int fromIndex, int toIndex){
+	public List<T> subList(int fromIndex, int toIndex){
 		return reify().subList(fromIndex, toIndex);
 	}
 
-	public Object set(int index, Object element){
+	public T set(int index, T element){
 		throw new UnsupportedOperationException();
 	}
 
-	public Object remove(int index){
+	public T remove(int index){
 		throw new UnsupportedOperationException();
 	}
 
@@ -285,16 +290,16 @@ public Object reduce(IFn f, Object start) throws Exception{
 		return reify().lastIndexOf(o);
 	}
 
-	public ListIterator listIterator(){
+	public ListIterator<T> listIterator(){
 		return reify().listIterator();
 	}
 
-	public ListIterator listIterator(int index){
+	public ListIterator<T> listIterator(int index){
 		return reify().listIterator(index);
 	}
 
-	public Object get(int index){
-		return RT.nth(this, index);
+	public T get(int index){
+		return (T) RT.nth(this, index);
 	}
 
 	public void add(int index, Object element){

@@ -12,8 +12,8 @@
 
 package com.trifork.clj_ds;
 
-public interface ILookup{
-Object valAt(Object key);
+public interface ILookup<K,V>{
+V valAt(K key);
 
-Object valAt(Object key, Object notFound);
+V valAt(K key, V notFound);
 }

@@ -12,9 +12,8 @@
 
 package com.trifork.clj_ds;
 
-import java.io.StringWriter;
 
-public abstract class AMapEntry extends APersistentVector implements IMapEntry{
+public abstract class AMapEntry<K,V> extends APersistentVector implements IMapEntry<K,V>{
 
 public Object nth(int i){
 	if(i == 0)

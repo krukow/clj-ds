@@ -16,14 +16,14 @@ package com.trifork.clj_ds;
  * ISeqs are immutable values, i.e. neither first(), nor rest() changes
  * or invalidates the ISeq
  */
-public interface ISeq extends IPersistentCollection, Sequential{
+public interface ISeq<T> extends IPersistentCollection<T>, Sequential{
 
-Object first();
+T first();
 
-ISeq next();
+ISeq<T> next();
 
-ISeq more();
+ISeq<T> more();
 
-ISeq cons(Object o);
+ISeq<T> cons(T o);
 
 }
