@@ -12,7 +12,6 @@ package com.trifork.clj_ds;
 
 import java.util.Collection;
 import java.util.Iterator;
-//import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * conses onto rear, peeks/pops from front
@@ -21,7 +20,7 @@ import java.util.Iterator;
  * so no reversing or suspensions required for persistent use
  */
 
-public class PersistentQueue extends Obj implements IPersistentList, Collection{
+public class PersistentQueue<T> extends Obj implements IPersistentList<T>, Collection<T>{
 
 final public static PersistentQueue EMPTY = new PersistentQueue(null, null, null);
 
@@ -78,11 +77,11 @@ public int hashCode(){
 	return _hash;
 }
 
-public Object peek(){
-	return RT.first(f);
+public T peek(){
+	return (T) RT.first(f);
 }
 
-public PersistentQueue pop(){
+public PersistentQueue<T> pop(){
 	if(f == null)  //hmmm... pop of empty queue -> empty queue?
 		return this;
 	//throw new IllegalStateException("popping empty queue");
@@ -93,56 +92,56 @@ public PersistentQueue pop(){
 		f1 = RT.seq(r);
 		r1 = null;
 		}
-	return new PersistentQueue(meta(), f1, r1);
+	return new PersistentQueue<T>(meta(), f1, r1);
 }
 
 public int count(){
 	return RT.count(f) + RT.count(r);
 }
 
-public ISeq seq(){
+public ISeq<T> seq(){
 	if(f == null)
 		return null;
-	return new Seq(f, RT.seq(r));
+	return new Seq<T>(f, RT.seq(r));
 }
 
-public PersistentQueue cons(Object o){
+public PersistentQueue<T> cons(T o){
 	if(f == null)     //empty
-		return new PersistentQueue(meta(), RT.list(o), null);
+		return new PersistentQueue<T>(meta(), RT.list(o), null);
 	else
-		return new PersistentQueue(meta(), f, (r != null ? r : PersistentVector.EMPTY).cons(o));
+		return new PersistentQueue<T>(meta(), f, (r != null ? r : PersistentVector.EMPTY).cons(o));
 }
 
-public IPersistentCollection empty(){
+public IPersistentCollection<T> empty(){
 	return EMPTY.withMeta(meta());	
 }
 
-public PersistentQueue withMeta(IPersistentMap meta){
-	return new PersistentQueue(meta, f, r);
+public PersistentQueue<T> withMeta(IPersistentMap meta){
+	return new PersistentQueue<T>(meta, f, r);
 }
 
-static class Seq extends ASeq{
-	final ISeq f;
-	final ISeq rseq;
+static class Seq<T> extends ASeq<T>{
+	final ISeq<T> f;
+	final ISeq<T> rseq;
 
-	Seq(ISeq f, ISeq rseq){
+	Seq(ISeq<T> f, ISeq<T> rseq){
 		this.f = f;
 		this.rseq = rseq;
 	}
 
-	Seq(IPersistentMap meta, ISeq f, ISeq rseq){
+	Seq(IPersistentMap meta, ISeq<T> f, ISeq<T> rseq){
 		super(meta);
 		this.f = f;
 		this.rseq = rseq;
 	}
 
-	public Object first(){
+	public T first(){
 		return f.first();
 	}
 
-	public ISeq next(){
-		ISeq f1 = f.next();
-		ISeq r1 = rseq;
+	public ISeq<T> next(){
+		ISeq<T> f1 = f.next();
+		ISeq<T> r1 = rseq;
 		if(f1 == null)
 			{
 			if(rseq == null)
@@ -150,15 +149,15 @@ static class Seq extends ASeq{
 			f1 = rseq;
 			r1 = null;
 			}
-		return new Seq(f1, r1);
+		return new Seq<T>(f1, r1);
 	}
 
 	public int count(){
 		return RT.count(f) + RT.count(rseq);
 	}
 
-	public Seq withMeta(IPersistentMap meta){
-		return new Seq(meta, f, rseq);
+	public Seq<T> withMeta(IPersistentMap meta){
+		return new Seq<T>(meta, f, rseq);
 	}
 }
 
@@ -176,7 +175,7 @@ public boolean remove(Object o){
 	throw new UnsupportedOperationException();
 }
 
-public boolean addAll(Collection c){
+public boolean addAll(Collection<? extends T> c){
 	throw new UnsupportedOperationException();
 }
 
@@ -184,15 +183,15 @@ public void clear(){
 	throw new UnsupportedOperationException();
 }
 
-public boolean retainAll(Collection c){
+public boolean retainAll(Collection<?> c){
 	throw new UnsupportedOperationException();
 }
 
-public boolean removeAll(Collection c){
+public boolean removeAll(Collection<?> c){
 	throw new UnsupportedOperationException();
 }
 
-public boolean containsAll(Collection c){
+public boolean containsAll(Collection<?> c){
 	for(Object o : c)
 		{
 		if(contains(o))
@@ -226,7 +225,7 @@ public boolean isEmpty(){
 }
 
 public boolean contains(Object o){
-	for(ISeq s = seq(); s != null; s = s.next())
+	for(ISeq<T> s = seq(); s != null; s = s.next())
 		{
 		if(Util.equiv(s.first(), o))
 			return true;
@@ -234,8 +233,8 @@ public boolean contains(Object o){
 	return false;
 }
 
-public Iterator iterator(){
-	return new SeqIterator(seq());
+public Iterator<T> iterator(){
+	return new SeqIterator<T>(seq());
 }
 
 /*

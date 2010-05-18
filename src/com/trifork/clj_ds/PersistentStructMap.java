@@ -12,11 +12,11 @@
 
 package com.trifork.clj_ds;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
-import java.io.Serializable;
 
-public class PersistentStructMap extends APersistentMap implements IObj{
+public class PersistentStructMap<K,V> extends APersistentMap<K,V> implements IObj{
 
 public static class Def implements Serializable{
 	final ISeq keys;
@@ -30,7 +30,7 @@ public static class Def implements Serializable{
 
 final Def def;
 final Object[] vals;
-final IPersistentMap ext;
+final IPersistentMap<K,V> ext;
 final IPersistentMap _meta;
 
 
@@ -45,47 +45,56 @@ static public Def createSlotMap(ISeq keys){
 		v[2*i] =  s.first();
 		v[2*i+1] = i;
 		}
-	return new Def(keys, RT.map(v));
+	return new Def(keys, map(v));
 }
 
-static public PersistentStructMap create(Def def, ISeq keyvals){
+static public <K,V> IPersistentMap<K,V> map(Object... init){
+	if(init == null)
+		return PersistentArrayMap.EMPTY;
+	else if(init.length <= PersistentArrayMap.HASHTABLE_THRESHOLD)
+		return PersistentArrayMap.createWithCheck(init);
+	return PersistentHashMap.create(init);
+}
+
+
+static public <K,V> PersistentStructMap<K,V> create(Def def, ISeq keyvals){
 	Object[] vals = new Object[def.keyslots.count()];
-	IPersistentMap ext = PersistentHashMap.EMPTY;
+	IPersistentMap<K,V> ext = PersistentHashMap.EMPTY;
 	for(; keyvals != null; keyvals = keyvals.next().next())
 		{
 		if(keyvals.next() == null)
 			throw new IllegalArgumentException(String.format("No value supplied for key: %s", keyvals.first()));
-		Object k = keyvals.first();
-		Object v = RT.second(keyvals);
-		Map.Entry e = def.keyslots.entryAt(k);
+		K k = (K) keyvals.first();
+		V v = (V) RT.second(keyvals);
+		Map.Entry<K,Integer> e = def.keyslots.entryAt(k);
 		if(e != null)
-			vals[(Integer) e.getValue()] = v;
+			vals[e.getValue()] = v;
 		else
 			ext = ext.assoc(k, v);
 		}
-	return new PersistentStructMap(null, def, vals, ext);
+	return new PersistentStructMap<K,V>(null, def, vals, ext);
 }
 
-static public PersistentStructMap construct(Def def, ISeq valseq){
+static public <K,V> PersistentStructMap<K,V> construct(Def def, ISeq<V> valseq){
 	Object[] vals = new Object[def.keyslots.count()];
-	IPersistentMap ext = PersistentHashMap.EMPTY;
+	IPersistentMap<K,V> ext = PersistentHashMap.EMPTY;
 	for(int i = 0; i < vals.length && valseq != null; valseq = valseq.next(), i++)
 		{
 		vals[i] = valseq.first();
 		}
 	if(valseq != null)
 		throw new IllegalArgumentException("Too many arguments to struct constructor");
-	return new PersistentStructMap(null, def, vals, ext);
+	return new PersistentStructMap<K,V>(null, def, vals, ext);
 }
 
-static public IFn getAccessor(final Def def, Object key){
-	Map.Entry e = def.keyslots.entryAt(key);
+static public <K,V> IFn getAccessor(final Def def, K key){
+	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
 	if(e != null)
 		{
-		final int i = (Integer) e.getValue();
+		final int i = e.getValue();
 		return new AFn(){
 			public Object invoke(Object arg1) throws Exception{
-				PersistentStructMap m = (PersistentStructMap) arg1;
+				PersistentStructMap<K,V> m = (PersistentStructMap<K,V>) arg1;
 				if(m.def != def)
 					throw new Exception("Accessor/struct mismatch");
 				return m.vals[i];
@@ -95,7 +104,7 @@ static public IFn getAccessor(final Def def, Object key){
 	throw new IllegalArgumentException("Not a key of struct");
 }
 
-protected PersistentStructMap(IPersistentMap meta, Def def, Object[] vals, IPersistentMap ext){
+protected PersistentStructMap(IPersistentMap meta, Def def, Object[] vals, IPersistentMap<K,V> ext){
 	this._meta = meta;
 	this.ext = ext;
 	this.def = def;
@@ -109,8 +118,8 @@ protected PersistentStructMap(IPersistentMap meta, Def def, Object[] vals, IPers
  * allow subclasses to return instances of their class from all
  * PersistentStructMap methods.
  */
-protected PersistentStructMap makeNew(IPersistentMap meta, Def def, Object[] vals, IPersistentMap ext){
-	return new PersistentStructMap(meta, def, vals, ext);
+protected PersistentStructMap<K,V> makeNew(IPersistentMap meta, Def def, Object[] vals, IPersistentMap<K,V> ext){
+	return new PersistentStructMap<K,V>(meta, def, vals, ext);
 }
 
 public IObj withMeta(IPersistentMap meta){
@@ -123,24 +132,25 @@ public IPersistentMap meta(){
 	return _meta;
 }
 
+
 public boolean containsKey(Object key){
-	return def.keyslots.containsKey(key) || ext.containsKey(key);
+	return def.keyslots.containsKey(key) || ((Map<K,V>)ext).containsKey(key);
 }
 
-public IMapEntry entryAt(Object key){
-	Map.Entry e = def.keyslots.entryAt(key);
+public IMapEntry<K,V> entryAt(K key){
+	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
 	if(e != null)
 		{
-		return new MapEntry(e.getKey(), vals[(Integer) e.getValue()]);
+		return new MapEntry<K,V>(e.getKey(), (V) vals[e.getValue()]);
 		}
 	return ext.entryAt(key);
 }
 
-public IPersistentMap assoc(Object key, Object val){
-	Map.Entry e = def.keyslots.entryAt(key);
+public IPersistentMap<K,V> assoc(K key, V val){
+	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
 	if(e != null)
 		{
-		int i = (Integer) e.getValue();
+		int i = e.getValue();
 		Object[] newVals = vals.clone();
 		newVals[i] = val;
 		return makeNew(_meta, def, newVals, ext);
@@ -148,42 +158,59 @@ public IPersistentMap assoc(Object key, Object val){
 	return makeNew(_meta, def, vals, ext.assoc(key, val));
 }
 
-public Object valAt(Object key){
+public V valAt(K key){
 	Integer i = (Integer) def.keyslots.valAt(key);
 	if(i != null)
 		{
-		return vals[i];
+		return (V) vals[i];
 		}
 	return ext.valAt(key);
 }
 
-public Object valAt(Object key, Object notFound){
+public V valAt(K key, V notFound){
 	Integer i = (Integer) def.keyslots.valAt(key);
 	if(i != null)
 		{
-		return vals[i];
+		return (V) vals[i];
 		}
 	return ext.valAt(key, notFound);
 }
 
-public IPersistentMap assocEx(Object key, Object val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
 	if(containsKey(key))
 		throw new Exception("Key already present");
 	return assoc(key, val);
 }
 
-public IPersistentMap without(Object key) throws Exception{
+public IPersistentMap<K,V> without(K key) throws Exception{
 	Map.Entry e = def.keyslots.entryAt(key);
 	if(e != null)
 		throw new Exception("Can't remove struct key");
-	IPersistentMap newExt = ext.without(key);
+	IPersistentMap<K,V> newExt = ext.without(key);
 	if(newExt == ext)
 		return this;
 	return makeNew(_meta, def, vals, newExt);
 }
 
-public Iterator iterator(){
-	return new SeqIterator(seq());
+public Iterator<Map.Entry<K, V>> iterator(){
+	return new Iterator<Map.Entry<K, V>>() {
+		
+		ISeq<IMapEntry<K, V>> seq = seq();
+
+		public boolean hasNext() {
+			return seq != null;
+		}
+
+		public java.util.Map.Entry<K, V> next() {
+			Entry<K,V> first = seq.first();
+			seq = seq.next();
+			return first;
+		}
+
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}		
+	};
 }
 
 
@@ -191,7 +218,7 @@ public int count(){
 	return vals.length + RT.count(ext);
 }
 
-public ISeq seq(){
+public ISeq<IMapEntry<K, V>> seq(){
 	return new Seq(null, def.keys, vals, 0, ext);
 }
 

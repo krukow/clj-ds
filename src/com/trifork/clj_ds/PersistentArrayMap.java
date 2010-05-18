@@ -10,8 +10,6 @@
 
 package com.trifork.clj_ds;
 
-import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -26,7 +24,7 @@ import java.util.Map;
  * null keys and values are ok, but you won't be able to distinguish a null value via valAt - use contains/entryAt
  */
 
-public class PersistentArrayMap extends APersistentMap implements IObj, IEditableCollection {
+public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements IObj, IEditableCollection<MapEntry<K, V>> {
 
 final Object[] array;
 static final int HASHTABLE_THRESHOLD = 16;
@@ -34,14 +32,14 @@ static final int HASHTABLE_THRESHOLD = 16;
 public static final PersistentArrayMap EMPTY = new PersistentArrayMap();
 private final IPersistentMap _meta;
 
-static public IPersistentMap create(Map other){
-	ITransientMap ret = EMPTY.asTransient();
-	for(Object o : other.entrySet())
+@SuppressWarnings("unchecked")
+static public <K,V> IPersistentMap<K,V> create(Map<? extends K, ? extends V> other){
+	ITransientMap<K,V> ret = EMPTY.asTransient();
+	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
 		{
-		Map.Entry e = (Entry) o;
 		ret = ret.assoc(e.getKey(), e.getValue());
 		}
-	return ret.persistent();
+	return ret.persistentMap();
 }
 
 protected PersistentArrayMap(){
@@ -49,29 +47,34 @@ protected PersistentArrayMap(){
 	this._meta = null;
 }
 
-public PersistentArrayMap withMeta(IPersistentMap meta){
-	return new PersistentArrayMap(meta, array);
+public PersistentArrayMap<K,V> withMeta(IPersistentMap meta){
+	return new PersistentArrayMap<K,V>(meta, array);
 }
 
-PersistentArrayMap create(Object... init){
-	return new PersistentArrayMap(meta(), init);
+PersistentArrayMap<K,V> create(Object... init){
+	return new PersistentArrayMap<K,V>(meta(), init);
 }
 
-IPersistentMap createHT(Object[] init){
+
+IPersistentMap<K,V> createHT(Object[] init){
 	return PersistentHashMap.create(meta(), init);
 }
 
-static public PersistentArrayMap createWithCheck(Object[] init){
+static public <K,V> PersistentArrayMap<K,V> createWithCheck(Object[] init){
 	for(int i=0;i< init.length;i += 2)
 		{
+		K k = (K) init[i];
+		if (i+1 >= init.length) {throw new IllegalArgumentException("Must provide an even number of params...");}
+		V v = (V) init[i+1];
 		for(int j=i+2;j<init.length;j += 2)
 			{
 			if(equalKey(init[i],init[j]))
 				throw new IllegalArgumentException("Duplicate key: " + init[i]);
 			}
 		}
-	return new PersistentArrayMap(init);
+	return new PersistentArrayMap<K,V>(init);
 }
+
 /**
  * This ctor captures/aliases the passed array, so do not modify later
  *
@@ -96,14 +99,14 @@ public boolean containsKey(Object key){
 	return indexOf(key) >= 0;
 }
 
-public IMapEntry entryAt(Object key){
+public IMapEntry<K,V> entryAt(K key){
 	int i = indexOf(key);
 	if(i >= 0)
-		return new MapEntry(array[i],array[i+1]);
+		return new MapEntry<K,V>((K) array[i],(V)array[i+1]);
 	return null;
 }
 
-public IPersistentMap assocEx(Object key, Object val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0)
@@ -123,7 +126,7 @@ public IPersistentMap assocEx(Object key, Object val) throws Exception{
 	return create(newArray);
 }
 
-public IPersistentMap assoc(Object key, Object val){
+public IPersistentMap<K,V> assoc(K key, V val){
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0) //already have key, same-sized replacement
@@ -146,7 +149,7 @@ public IPersistentMap assoc(Object key, Object val){
 	return create(newArray);
 }
 
-public IPersistentMap without(Object key){
+public IPersistentMap<K,V> without(K key){
 	int i = indexOf(key);
 	if(i >= 0) //have key, will remove
 		{
@@ -169,18 +172,18 @@ public IPersistentMap without(Object key){
 	return this;
 }
 
-public IPersistentMap empty(){
-	return (IPersistentMap) EMPTY.withMeta(meta());
+public IPersistentMap<K,V> empty(){
+	return (IPersistentMap<K,V>) EMPTY.withMeta(meta());
 }
 
-final public Object valAt(Object key, Object notFound){
+final public V valAt(K key, V notFound){
 	int i = indexOf(key);
 	if(i >= 0)
-		return array[i + 1];
+		return (V) array[i + 1];
 	return notFound;
 }
 
-public Object valAt(Object key){
+public V valAt(K key){
 	return valAt(key, null);
 }
 
@@ -203,7 +206,7 @@ static boolean equalKey(Object k1, Object k2){
 	return k1.equals(k2);
 }
 
-public Iterator iterator(){
+public Iterator<Map.Entry<K, V>> iterator(){
 	return new Iter(array);
 }
 
@@ -285,7 +288,7 @@ public ITransientMap asTransient(){
 	return new TransientArrayMap(array);
 }
 
-static final class TransientArrayMap extends ATransientMap {
+static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 	int len;
 	final Object[] array;
 	Thread owner;
@@ -306,7 +309,7 @@ static final class TransientArrayMap extends ATransientMap {
 		return -1;
 	}
 
-	ITransientMap doAssoc(Object key, Object val){
+	ITransientMap<K,V> doAssoc(K key, V val){
 		int i = indexOf(key);
 		if(i >= 0) //already have key,
 			{
@@ -323,7 +326,7 @@ static final class TransientArrayMap extends ATransientMap {
 		return this;
 	}
 
-	ITransientMap doWithout(Object key) {
+	ITransientMap<K,V> doWithout(K key) {
 		int i = indexOf(key);
 		if(i >= 0) //have key, will remove
 			{
@@ -337,10 +340,10 @@ static final class TransientArrayMap extends ATransientMap {
 		return this;
 	}
 
-	Object doValAt(Object key, Object notFound) {
+	V doValAt(K key, V notFound) {
 		int i = indexOf(key);
 		if (i >= 0)
-			return array[i + 1];
+			return (V) array[i + 1];
 		return notFound;
 	}
 
@@ -348,12 +351,12 @@ static final class TransientArrayMap extends ATransientMap {
 		return len / 2;
 	}
 	
-	IPersistentMap doPersistent(){
+	IPersistentMap<K,V> doPersistent(){
 		ensureEditable();
 		owner = null;
 		Object[] a = new Object[len];
 		System.arraycopy(array,0,a,0,len);
-		return new PersistentArrayMap(a);
+		return new PersistentArrayMap<K,V>(a);
 	}
 
 	void ensureEditable(){
@@ -362,6 +365,11 @@ static final class TransientArrayMap extends ATransientMap {
 		if(owner != null)
 			throw new IllegalAccessError("Transient used by non-owner thread");
 		throw new IllegalAccessError("Transient used after persistent! call");
+	}
+
+	@Override
+	public IPersistentCollection persistent() {
+		return persistentMap();
 	}
 }
 }

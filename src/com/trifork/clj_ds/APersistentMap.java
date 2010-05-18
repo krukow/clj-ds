@@ -11,37 +11,22 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
-public abstract class APersistentMap extends AFn implements IPersistentMap, Map, Iterable, Serializable {
+public abstract class APersistentMap<K,V> extends AFn implements IPersistentMap<K,V>, Map<K,V>, Iterable<Map.Entry<K, V>>, Serializable {
 int _hash = -1;
 
 public String toString(){
 	return RT.printString(this);
 }
 
-public IPersistentCollection cons(Object o){
-	if(o instanceof Map.Entry)
-		{
-		Map.Entry e = (Map.Entry) o;
-
-		return assoc(e.getKey(), e.getValue());
-		}
-	else if(o instanceof IPersistentVector)
-		{
-		IPersistentVector v = (IPersistentVector) o;
-		if(v.count() != 2)
-			throw new IllegalArgumentException("Vector arg to map conj must be a pair");
-		return assoc(v.nth(0), v.nth(1));
-		}
-
-	IPersistentMap ret = this;
-	for(ISeq es = RT.seq(o); es != null; es = es.next())
-		{
-		Map.Entry e = (Map.Entry) es.first();
-		ret = ret.assoc(e.getKey(), e.getValue());
-		}
-	return ret;
+public IPersistentCollection cons(IMapEntry<K,V> o){
+	return assoc(o.getKey(), o.getValue());
 }
 
 public boolean equals(Object obj){
@@ -165,11 +150,11 @@ static public class ValSeq extends ASeq{
 
 
 public Object invoke(Object arg1) throws Exception{
-	return valAt(arg1);
+	return valAt((K) arg1);
 }
 
 public Object invoke(Object arg1, Object notFound) throws Exception{
-	return valAt(arg1, notFound);
+	return valAt((K) arg1, (V) notFound);
 }
 
 // java.util.Map implementation
@@ -182,10 +167,10 @@ public boolean containsValue(Object value){
 	return values().contains(value);
 }
 
-public Set entrySet(){
-	return new AbstractSet(){
+public Set<Map.Entry<K, V>> entrySet(){
+	return new AbstractSet<Map.Entry<K, V>>(){
 
-		public Iterator iterator(){
+		public Iterator<Map.Entry<K, V>> iterator(){
 			return APersistentMap.this.iterator();
 		}
 
@@ -201,7 +186,7 @@ public Set entrySet(){
 			if(o instanceof Entry)
 				{
 				Entry e = (Entry) o;
-				Entry found = entryAt(e.getKey());
+				Entry found = entryAt((K) e.getKey());
 				if(found != null && Util.equals(found.getValue(), e.getValue()))
 					return true;
 				}
@@ -210,29 +195,29 @@ public Set entrySet(){
 	};
 }
 
-public Object get(Object key){
-	return valAt(key);
+public V get(Object key){
+	return valAt((K) key);
 }
 
 public boolean isEmpty(){
 	return count() == 0;
 }
 
-public Set keySet(){
-	return new AbstractSet(){
+public Set<K> keySet(){
+	return new AbstractSet<K>(){
 
-		public Iterator iterator(){
-			final Iterator mi = APersistentMap.this.iterator();
+		public Iterator<K> iterator(){
+			final Iterator<Map.Entry<K, V>> mi = APersistentMap.this.iterator();
 
-			return new Iterator(){
+			return new Iterator<K>(){
 
 
 				public boolean hasNext(){
 					return mi.hasNext();
 				}
 
-				public Object next(){
-					Entry e = (Entry) mi.next();
+				public K next(){
+					Entry<K,V> e = (Entry<K,V>) mi.next();
 					return e.getKey();
 				}
 
@@ -252,7 +237,7 @@ public Set keySet(){
 	};
 }
 
-public Object put(Object key, Object value){
+public V put(K key, V value){
 	throw new UnsupportedOperationException();
 }
 
@@ -260,7 +245,7 @@ public void putAll(Map t){
 	throw new UnsupportedOperationException();
 }
 
-public Object remove(Object key){
+public V remove(Object key){
 	throw new UnsupportedOperationException();
 }
 
@@ -268,22 +253,21 @@ public int size(){
 	return count();
 }
 
-public Collection values(){
-	return new AbstractCollection(){
+public Collection<V> values(){
+	return new AbstractCollection<V>(){
 
-		public Iterator iterator(){
-			final Iterator mi = APersistentMap.this.iterator();
+		public Iterator<V> iterator(){
+			final Iterator<Map.Entry<K, V>> mi = APersistentMap.this.iterator();
 
-			return new Iterator(){
+			return new Iterator<V>(){
 
 
 				public boolean hasNext(){
 					return mi.hasNext();
 				}
 
-				public Object next(){
-					Entry e = (Entry) mi.next();
-					return e.getValue();
+				public V next(){
+					return mi.next().getValue();
 				}
 
 				public void remove(){

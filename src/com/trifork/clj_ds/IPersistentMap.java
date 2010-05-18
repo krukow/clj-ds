@@ -10,14 +10,16 @@
 
 package com.trifork.clj_ds;
 
+import java.util.Map;
 
-public interface IPersistentMap extends Iterable, Associative, Counted{
+
+public interface IPersistentMap<K,V> extends Iterable<Map.Entry<K, V>>, Associative<K,V>, Counted{
 
 
-IPersistentMap assoc(Object key, Object val);
+IPersistentMap<K,V> assoc(K key, V val);
 
-IPersistentMap assocEx(Object key, Object val) throws Exception;
+IPersistentMap<K,V> assocEx(K key, V val) throws Exception;
 
-IPersistentMap without(Object key) throws Exception;
+IPersistentMap<K,V> without(K key) throws Exception;
 
 }

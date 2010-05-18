@@ -17,11 +17,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class APersistentSet extends AFn implements IPersistentSet, Collection, Set, Serializable {
+public abstract class APersistentSet<T> extends AFn implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable {
 int _hash = -1;
 final IPersistentMap impl;
 
-protected APersistentSet(IPersistentMap impl){
+protected APersistentSet(IPersistentMap<T, Boolean> impl){
 	this.impl = impl;
 }
 
@@ -33,20 +33,20 @@ public boolean contains(Object key){
 	return impl.containsKey(key);
 }
 
-public Object get(Object key){
-	return impl.valAt(key);
+public Boolean get(T key){
+	return (Boolean) impl.valAt(key);
 }
 
 public int count(){
 	return impl.count();
 }
 
-public ISeq seq(){
+public ISeq<T> seq(){
 	return RT.keys(impl);
 }
 
 public Object invoke(Object arg1) throws Exception{
-	return get(arg1);
+	return get((T) arg1);
 }
 
 public boolean equals(Object obj){
@@ -153,8 +153,8 @@ public boolean isEmpty(){
 	return count() == 0;
 }
 
-public Iterator iterator(){
-	return new SeqIterator(seq());
+public Iterator<T> iterator(){
+	return new SeqIterator<T>(seq());
 }
 
 }

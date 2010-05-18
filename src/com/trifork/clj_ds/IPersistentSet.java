@@ -12,8 +12,8 @@
 
 package com.trifork.clj_ds;
 
-public interface IPersistentSet extends IPersistentCollection, Counted{
-	public IPersistentSet disjoin(Object key) throws Exception;
-	public boolean contains(Object key);
-	public Object get(Object key);
+public interface IPersistentSet<T> extends IPersistentCollection<T>, Counted{
+	public IPersistentSet<T> disjoin(T key) throws Exception;
+	public boolean contains(T key);
+	public Boolean get(T key);
 }

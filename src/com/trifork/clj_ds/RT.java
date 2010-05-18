@@ -634,14 +634,6 @@ public class RT {
 		return x;
 	}
 
-	static public IPersistentMap map(Object... init) {
-		if (init == null)
-			return PersistentArrayMap.EMPTY;
-		else if (init.length <= PersistentArrayMap.HASHTABLE_THRESHOLD)
-			return PersistentArrayMap.createWithCheck(init);
-		return PersistentHashMap.createWithCheck(init);
-	}
-
 	static public IPersistentSet set(Object... init) {
 		return PersistentHashSet.createWithCheck(init);
 	}

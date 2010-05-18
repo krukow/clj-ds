@@ -14,25 +14,25 @@ package com.trifork.clj_ds;
 
 import java.util.Comparator;
 
-public class PersistentTreeSet extends APersistentSet implements IObj, Reversible, Sorted{
+public class PersistentTreeSet<T> extends APersistentSet<T> implements IObj, Reversible<T>, Sorted<T>{
 static public final PersistentTreeSet EMPTY = new PersistentTreeSet(null, PersistentTreeMap.EMPTY);
 final IPersistentMap _meta;
 
 
-static public PersistentTreeSet create(ISeq items){
-	PersistentTreeSet ret = EMPTY;
+static public <T> PersistentTreeSet<T> create(ISeq<? extends T> items){
+	PersistentTreeSet<T> ret = EMPTY;
 	for(; items != null; items = items.next())
 		{
-		ret = (PersistentTreeSet) ret.cons(items.first());
+		ret = (PersistentTreeSet<T>) ret.cons(items.first());
 		}
 	return ret;
 }
 
-static public PersistentTreeSet create(Comparator comp, ISeq items){
-	PersistentTreeSet ret = new PersistentTreeSet(null, new PersistentTreeMap(null, comp));
+static public <T> PersistentTreeSet<T> create(Comparator<T> comp, ISeq<? extends T> items){
+	PersistentTreeSet<T> ret = new PersistentTreeSet<T>(null, new PersistentTreeMap(null, comp));
 	for(; items != null; items = items.next())
 		{
-		ret = (PersistentTreeSet) ret.cons(items.first());
+		ret = (PersistentTreeSet<T>) ret.cons(items.first());
 		}
 	return ret;
 }
@@ -42,44 +42,44 @@ PersistentTreeSet(IPersistentMap meta, IPersistentMap impl){
 	this._meta = meta;
 }
 
-public IPersistentSet disjoin(Object key) throws Exception{
+public IPersistentSet<T> disjoin(T key) throws Exception{
 	if(contains(key))
-		return new PersistentTreeSet(meta(),impl.without(key));
+		return new PersistentTreeSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet cons(Object o){
+public IPersistentSet<T> cons(T o){
 	if(contains(o))
 		return this;
-	return new PersistentTreeSet(meta(),impl.assoc(o,o));
+	return new PersistentTreeSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection empty(){
-	return new PersistentTreeSet(meta(),(PersistentTreeMap)impl.empty());
+public IPersistentCollection<T> empty(){
+	return new PersistentTreeSet<T>(meta(),(PersistentTreeMap)impl.empty());
 }
 
-public ISeq rseq() throws Exception{
+public ISeq<T> rseq() throws Exception{
 	return APersistentMap.KeySeq.create(((Reversible) impl).rseq());
 }
 
-public PersistentTreeSet withMeta(IPersistentMap meta){
-	return new PersistentTreeSet(meta, impl);
+public PersistentTreeSet<T> withMeta(IPersistentMap meta){
+	return new PersistentTreeSet<T>(meta, impl);
 }
 
-public Comparator comparator(){
-	return ((Sorted)impl).comparator();
+public Comparator<T> comparator(){
+	return ((Sorted<T>)impl).comparator();
 }
 
 public Object entryKey(Object entry){
 	return entry;
 }
 
-public ISeq seq(boolean ascending){
+public ISeq<T> seq(boolean ascending){
 	PersistentTreeMap m = (PersistentTreeMap) impl;
 	return RT.keys(m.seq(ascending));
 }
 
-public ISeq seqFrom(Object key, boolean ascending){
+public ISeq<T> seqFrom(T key, boolean ascending){
 	PersistentTreeMap m = (PersistentTreeMap) impl;
 	return RT.keys(m.seqFrom(key,ascending));
 }

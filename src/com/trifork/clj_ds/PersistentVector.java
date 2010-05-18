@@ -14,6 +14,7 @@ package com.trifork.clj_ds;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>{
@@ -49,21 +50,21 @@ static public <T> PersistentVector<T> create(ISeq<? extends T> items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(; items != null; items = items.next())
 		ret = ret.conj(items.first());
-	return ret.persistent();
+	return ret.persistentMap();
 }
 
 static public <T> PersistentVector<T> create(List<? extends T> items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(T item : items)
 		ret = ret.conj(item);
-	return ret.persistent();
+	return ret.persistentMap();
 }
 
 static public <T> PersistentVector<T> create(T ... items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(T item : items)
 		ret = ret.conj(item);
-	return ret.persistent();
+	return ret.persistentMap();
 }
 
 PersistentVector(int cnt, int shift, Node root, Object[] tail){
@@ -426,7 +427,7 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		return new Node(new AtomicReference<Thread>(Thread.currentThread()), node.array.clone());
 	}
 
-	public PersistentVector<T> persistent(){
+	public PersistentVector<T> persistentMap(){
 		ensureEditable();
 //		Thread owner = root.edit.get();
 //		if(owner != null && owner != Thread.currentThread())
@@ -445,7 +446,8 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		return ret;
 	}
 
-	public TransientVector<T> conj(T val){
+	public TransientVector<T> conj(Object val){
+		T t = (T) val;
 		ensureEditable();
 		int i = cnt;
 		//room in tail?
@@ -573,12 +575,12 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		throw new IndexOutOfBoundsException();
 	}
 
-	public TransientVector<T> assoc(Object key, T val){
+	public TransientVector<T> assoc(Object key, Object val){
 		//note - relies on ensureEditable in assocN
 		if(Util.isInteger(key))
 			{
 			int i = ((Number) key).intValue();
-			return assocN(i, val);
+			return assocN(i, (T) val);
 			}
 		throw new IllegalArgumentException("Key must be integer");
 	}
@@ -660,6 +662,10 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 			}
 	}
 
+	@Override
+	public IPersistentCollection persistent() {
+		return persistentMap();
+	}
 	
 }
 /*

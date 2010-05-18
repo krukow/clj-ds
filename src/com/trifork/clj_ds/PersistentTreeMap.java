@@ -12,7 +12,10 @@
 
 package com.trifork.clj_ds;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Stack;
 
 /**
  * Persistent Red Black Tree
@@ -22,21 +25,20 @@ import java.util.*;
  * See Okasaki, Kahrs, Larsen et al
  */
 
-public class PersistentTreeMap extends APersistentMap implements IObj, Reversible, Sorted{
+public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements IObj, Reversible<Map.Entry<K, V>>, Sorted<K>{
 
-public final Comparator comp;
+public final Comparator<K> comp;
 public final Node tree;
 public final int _count;
 final IPersistentMap _meta;
 
 final static public PersistentTreeMap EMPTY = new PersistentTreeMap();
 
-static public IPersistentMap create(Map other){
-	IPersistentMap ret = EMPTY;
-	for(Object o : other.entrySet())
+static public <K,V> IPersistentMap<K,V> create(Map<? extends K,? extends V> other){
+	IPersistentMap<K,V> ret = EMPTY;
+	for(Map.Entry<? extends K,? extends V> o : other.entrySet())
 		{
-		Map.Entry e = (Entry) o;
-		ret = ret.assoc(e.getKey(), e.getValue());
+		ret = ret.assoc(o.getKey(), o.getValue());
 		}
 	return ret;
 }
@@ -45,66 +47,69 @@ public PersistentTreeMap(){
 	this(RT.DEFAULT_COMPARATOR);
 }
 
-public PersistentTreeMap withMeta(IPersistentMap meta){
-	return new PersistentTreeMap(meta, comp, tree, _count);
+public PersistentTreeMap<K,V> withMeta(IPersistentMap meta){
+	return new PersistentTreeMap<K,V>(meta, comp, tree, _count);
 }
 
-private PersistentTreeMap(Comparator comp){
+private PersistentTreeMap(Comparator<K> comp){
 	this(null, comp);
 }
 
 
-public PersistentTreeMap(IPersistentMap meta, Comparator comp){
+public PersistentTreeMap(IPersistentMap meta, Comparator<K> comp){
 	this.comp = comp;
 	this._meta = meta;
 	tree = null;
 	_count = 0;
 }
 
-PersistentTreeMap(IPersistentMap meta, Comparator comp, Node tree, int _count){
+PersistentTreeMap(IPersistentMap meta, Comparator<K> comp, Node tree, int _count){
 	this._meta = meta;
 	this.comp = comp;
 	this.tree = tree;
 	this._count = _count;
 }
 
-static public PersistentTreeMap create(ISeq items){
-	IPersistentMap ret = EMPTY;
+static public <K,V> PersistentTreeMap<K,V> create(ISeq items){
+	IPersistentMap<K,V> ret = EMPTY;
 	for(; items != null; items = items.next().next())
 		{
 		if(items.next() == null)
 			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-		ret = ret.assoc(items.first(), RT.second(items));
+		ret = ret.assoc((K) items.first(), (V) RT.second(items));
 		}
-	return (PersistentTreeMap) ret;
+	return (PersistentTreeMap<K,V>) ret;
 }
 
-static public PersistentTreeMap create(Comparator comp, ISeq items){
-	IPersistentMap ret = new PersistentTreeMap(comp);
+static public <K,V> PersistentTreeMap<K,V> create(Comparator<K> comp, ISeq items){
+	IPersistentMap<K,V> ret = new PersistentTreeMap(comp);
 	for(; items != null; items = items.next().next())
 		{
 		if(items.next() == null)
 			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-		ret = ret.assoc(items.first(), RT.second(items));
+		ret = ret.assoc((K) items.first(), (V) RT.second(items));
 		}
-	return (PersistentTreeMap) ret;
+	return (PersistentTreeMap<K,V>) ret;
 }
 
 public boolean containsKey(Object key){
-	return entryAt(key) != null;
+	return entryAt((K) key) != null;
+}
+public Object entryKey(Object entry){
+	return ((IMapEntry) entry).key();
 }
 
-public PersistentTreeMap assocEx(Object key, Object val) throws Exception{
+public PersistentTreeMap<K,V> assocEx(K key, V val) throws Exception{
 	Box found = new Box(null);
 	Node t = add(tree, key, val, found);
 	if(t == null)   //null == already contains key
 		{
 		throw new Exception("Key already present");
 		}
-	return new PersistentTreeMap(comp, t.blacken(), _count + 1, meta());
+	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1, meta());
 }
 
-public PersistentTreeMap assoc(Object key, Object val){
+public PersistentTreeMap<K,V> assoc(K key, V val){
 	Box found = new Box(null);
 	Node t = add(tree, key, val, found);
 	if(t == null)   //null == already contains key
@@ -112,13 +117,13 @@ public PersistentTreeMap assoc(Object key, Object val){
 		Node foundNode = (Node) found.val;
 		if(foundNode.val() == val)  //note only get same collection on identity of val, not equals()
 			return this;
-		return new PersistentTreeMap(comp, replace(tree, key, val), _count, meta());
+		return new PersistentTreeMap<K,V>(comp, replace(tree, key, val), _count, meta());
 		}
-	return new PersistentTreeMap(comp, t.blacken(), _count + 1, meta());
+	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1, meta());
 }
 
 
-public PersistentTreeMap without(Object key){
+public PersistentTreeMap<K,V> without(K key){
 	Box found = new Box(null);
 	Node t = remove(tree, key, found);
 	if(t == null)
@@ -126,9 +131,9 @@ public PersistentTreeMap without(Object key){
 		if(found.val == null)//null == doesn't contain key
 			return this;
 		//empty
-		return new PersistentTreeMap(meta(), comp);
+		return new PersistentTreeMap<K,V>(meta(), comp);
 		}
-	return new PersistentTreeMap(comp, t.blacken(), _count - 1, meta());
+	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count - 1, meta());
 }
 
 public ISeq seq(){
@@ -147,13 +152,10 @@ public ISeq rseq() throws Exception{
 	return null;
 }
 
-public Comparator comparator(){
+public Comparator<K> comparator(){
 	return comp;
 }
 
-public Object entryKey(Object entry){
-	return ((IMapEntry) entry).key();
-}
 
 public ISeq seq(boolean ascending){
 	if(_count > 0)
@@ -161,14 +163,14 @@ public ISeq seq(boolean ascending){
 	return null;
 }
 
-public ISeq seqFrom(Object key, boolean ascending){
+public ISeq seqFrom(K key, boolean ascending){
 	if(_count > 0)
 		{
 		ISeq stack = null;
 		Node t = tree;
 		while(t != null)
 			{
-			int c = doCompare(key, t.key);
+			int c = doCompare(key, (K) t.key);
 			if(c == 0)
 				{
 				stack = RT.cons(t, stack);
@@ -209,20 +211,20 @@ public NodeIterator reverseIterator(){
 	return new NodeIterator(tree, false);
 }
 
-public Iterator keys(){
+public Iterator<K> keys(){
 	return keys(iterator());
 }
 
-public Iterator vals(){
+public Iterator<V> vals(){
 	return vals(iterator());
 }
 
-public Iterator keys(NodeIterator it){
-	return new KeyIterator(it);
+public Iterator<K> keys(NodeIterator it){
+	return new KeyIterator<K>(it);
 }
 
-public Iterator vals(NodeIterator it){
-	return new ValIterator(it);
+public Iterator<V> vals(NodeIterator it){
+	return new ValIterator<V>(it);
 }
 
 public Object minKey(){
@@ -265,12 +267,12 @@ int depth(Node t){
 	return 1 + Math.max(depth(t.left()), depth(t.right()));
 }
 
-public Object valAt(Object key, Object notFound){
+public V valAt(K key, V notFound){
 	Node n = entryAt(key);
-	return (n != null) ? n.val() : notFound;
+	return  ((n != null) ? (V) n.val() : notFound);
 }
 
-public Object valAt(Object key){
+public V valAt(K key){
 	return valAt(key, null);
 }
 
@@ -282,11 +284,11 @@ public int count(){
 	return _count;
 }
 
-public Node entryAt(Object key){
+public Node entryAt(K key){
 	Node t = tree;
 	while(t != null)
 		{
-		int c = doCompare(key, t.key);
+		int c = doCompare(key, (K) t.key);
 		if(c == 0)
 			return t;
 		else if(c < 0)
@@ -297,7 +299,7 @@ public Node entryAt(Object key){
 	return t;
 }
 
-public int doCompare(Object k1, Object k2){
+public int doCompare(K k1, K k2){
 //	if(comp != null)
 		return comp.compare(k1, k2);
 //	return ((Comparable) k1).compareTo(k2);
@@ -310,7 +312,7 @@ Node add(Node t, Object key, Object val, Box found){
 			return new Red(key);
 		return new RedVal(key, val);
 		}
-	int c = doCompare(key, t.key);
+	int c = doCompare((K) key, (K) t.key);
 	if(c == 0)
 		{
 		found.val = t;
@@ -324,10 +326,10 @@ Node add(Node t, Object key, Object val, Box found){
 	return t.addRight(ins);
 }
 
-Node remove(Node t, Object key, Box found){
+Node remove(Node t, K key, Box found){
 	if(t == null)
 		return null; //not found indicator
-	int c = doCompare(key, t.key);
+	int c = doCompare(key, (K) t.key);
 	if(c == 0)
 		{
 		found.val = t;
@@ -433,8 +435,8 @@ static Node rightBalance(Object key, Object val, Node left, Node ins){
 		return black(key, val, left, ins);
 }
 
-Node replace(Node t, Object key, Object val){
-	int c = doCompare(key, t.key);
+Node replace(Node t, K key, Object val){
+	int c = doCompare(key, (K) t.key);
 	return t.replace(t.key,
 	                 c == 0 ? val : t.val(),
 	                 c < 0 ? replace(t.left(), key, val) : t.left(),
@@ -839,7 +841,7 @@ static public class NodeIterator implements Iterator{
 	}
 }
 
-static class KeyIterator implements Iterator{
+static class KeyIterator<K> implements Iterator<K>{
 	NodeIterator it;
 
 	KeyIterator(NodeIterator it){
@@ -850,8 +852,8 @@ static class KeyIterator implements Iterator{
 		return it.hasNext();
 	}
 
-	public Object next(){
-		return ((Node) it.next()).key;
+	public K next(){
+		return (K) ((Node) it.next()).key;
 	}
 
 	public void remove(){
@@ -859,7 +861,7 @@ static class KeyIterator implements Iterator{
 	}
 }
 
-static class ValIterator implements Iterator{
+static class ValIterator<T> implements Iterator<T>{
 	NodeIterator it;
 
 	ValIterator(NodeIterator it){
@@ -870,8 +872,8 @@ static class ValIterator implements Iterator{
 		return it.hasNext();
 	}
 
-	public Object next(){
-		return ((Node) it.next()).val();
+	public T next(){
+		return (T) ((Node) it.next()).val();
 	}
 
 	public void remove(){

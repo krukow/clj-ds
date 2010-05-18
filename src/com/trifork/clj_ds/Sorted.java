@@ -14,12 +14,12 @@ package com.trifork.clj_ds;
 
 import java.util.Comparator;
 
-public interface Sorted{
-Comparator comparator();
+public interface Sorted<K>{
+Comparator<K> comparator();
 
 Object entryKey(Object entry);
 
 ISeq seq(boolean ascending);
 
-ISeq seqFrom(Object key, boolean ascending);
+ISeq seqFrom(K key, boolean ascending);
 }

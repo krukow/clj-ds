@@ -15,22 +15,23 @@ package com.trifork.clj_ds;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class SeqIterator implements Iterator{
+public class SeqIterator<T> implements Iterator<T>{
 
-ISeq seq;
+ISeq<T> seq;
 
-public SeqIterator(ISeq seq){
+public SeqIterator(ISeq<T> seq){
 	this.seq = seq;
 }
+
 
 public boolean hasNext(){
 	return seq != null;
 }
 
-public Object next() throws NoSuchElementException {
+public T next() throws NoSuchElementException {
 	if(seq == null)
 		throw new NoSuchElementException();
-	Object ret = RT.first(seq);
+	T ret = (T) RT.first(seq);
 	seq = RT.next(seq);
 	return ret;
 }

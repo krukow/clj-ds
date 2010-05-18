@@ -14,56 +14,56 @@ package com.trifork.clj_ds;
 
 import java.util.List;
 
-public class PersistentHashSet extends APersistentSet implements IObj, IEditableCollection {
+public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T> {
 
 static public final PersistentHashSet EMPTY = new PersistentHashSet(null, PersistentHashMap.EMPTY);
 
 final IPersistentMap _meta;
 
-public static PersistentHashSet create(Object... init){
-	PersistentHashSet ret = EMPTY;
+public static <T> PersistentHashSet<T> create(T... init){
+	PersistentHashSet<T> ret = EMPTY;
 	for(int i = 0; i < init.length; i++)
 		{
-		ret = (PersistentHashSet) ret.cons(init[i]);
+		ret = (PersistentHashSet<T>) ret.cons(init[i]);
 		}
 	return ret;
 }
 
-public static PersistentHashSet create(List init){
-	PersistentHashSet ret = EMPTY;
-	for(Object key : init)
+public static <T> PersistentHashSet<T> create(List<? extends T> init){
+	PersistentHashSet<T> ret = EMPTY;
+	for(T key : init)
 		{
-		ret = (PersistentHashSet) ret.cons(key);
+		ret = (PersistentHashSet<T>) ret.cons(key);
 		}
 	return ret;
 }
 
-static public PersistentHashSet create(ISeq items){
-	PersistentHashSet ret = EMPTY;
+static public <T> PersistentHashSet<T> create(ISeq<? extends T> items){
+	PersistentHashSet<T> ret = EMPTY;
 	for(; items != null; items = items.next())
 		{
-		ret = (PersistentHashSet) ret.cons(items.first());
+		ret = (PersistentHashSet<T>) ret.cons(items.first());
 		}
 	return ret;
 }
 
-public static PersistentHashSet createWithCheck(Object... init){
-	PersistentHashSet ret = EMPTY;
+public static <T> PersistentHashSet<T> createWithCheck(T ... init){
+	PersistentHashSet<T> ret = EMPTY;
 	for(int i = 0; i < init.length; i++)
 		{
-		ret = (PersistentHashSet) ret.cons(init[i]);
+		ret = (PersistentHashSet<T>) ret.cons(init[i]);
 		if(ret.count() != i + 1)
 			throw new IllegalArgumentException("Duplicate key: " + init[i]);
 		}
 	return ret;
 }
 
-public static PersistentHashSet createWithCheck(List init){
-	PersistentHashSet ret = EMPTY;
+public static <T> PersistentHashSet<T> createWithCheck(List<? extends T> init){
+	PersistentHashSet<T> ret = EMPTY;
 	int i=0;
-	for(Object key : init)
+	for(T key : init)
 		{
-		ret = (PersistentHashSet) ret.cons(key);
+		ret = (PersistentHashSet<T>) ret.cons(key);
 		if(ret.count() != i + 1)
 			throw new IllegalArgumentException("Duplicate key: " + key);		
 		++i;
@@ -71,11 +71,11 @@ public static PersistentHashSet createWithCheck(List init){
 	return ret;
 }
 
-static public PersistentHashSet createWithCheck(ISeq items){
-	PersistentHashSet ret = EMPTY;
+static public <T> PersistentHashSet<T> createWithCheck(ISeq<? extends T> items){
+	PersistentHashSet<T> ret = EMPTY;
 	for(int i=0; items != null; items = items.next(), ++i)
 		{
-		ret = (PersistentHashSet) ret.cons(items.first());
+		ret = (PersistentHashSet<T>) ret.cons(items.first());
 		if(ret.count() != i + 1)
 			throw new IllegalArgumentException("Duplicate key: " + items.first());
 		}
@@ -87,41 +87,41 @@ PersistentHashSet(IPersistentMap meta, IPersistentMap impl){
 	this._meta = meta;
 }
 
-public IPersistentSet disjoin(Object key) throws Exception{
+public IPersistentSet<T> disjoin(T key) throws Exception{
 	if(contains(key))
-		return new PersistentHashSet(meta(),impl.without(key));
+		return new PersistentHashSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet cons(Object o){
+public IPersistentSet<T> cons(T o){
 	if(contains(o))
 		return this;
-	return new PersistentHashSet(meta(),impl.assoc(o,o));
+	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection empty(){
+public IPersistentCollection<T> empty(){
 	return EMPTY.withMeta(meta());	
 }
 
-public PersistentHashSet withMeta(IPersistentMap meta){
-	return new PersistentHashSet(meta, impl);
+public PersistentHashSet<T> withMeta(IPersistentMap meta){
+	return new PersistentHashSet<T>(meta, impl);
 }
 
-public ITransientCollection asTransient() {
-	return new TransientHashSet(((PersistentHashMap) impl).asTransient());
+public ITransientCollection<T> asTransient() {
+	return new TransientHashSet<T>(((PersistentHashMap) impl).asTransient());
 }
 
 public IPersistentMap meta(){
 	return _meta;
 }
 
-static final class TransientHashSet extends ATransientSet {
+static final class TransientHashSet<T> extends ATransientSet<T> {
 	TransientHashSet(ITransientMap impl) {
 		super(impl);
 	}
 
-	public IPersistentCollection persistent() {
-		return new PersistentHashSet(null, impl.persistent());
+	public IPersistentCollection<T> persistent() {
+		return new PersistentHashSet<T>(null, impl.persistentMap());
 	}
 }
 

@@ -12,11 +12,12 @@
 
 package com.trifork.clj_ds;
 
-public interface ITransientMap extends ITransientAssociative, Counted{
+
+public interface ITransientMap<K,V> extends ITransientAssociative<K, V>, Counted{
 	
-ITransientMap assoc(Object key, Object val);
+ITransientMap<K,V> assoc(K key, V val);
 
-ITransientMap without(Object key);
+ITransientMap<K,V> without(K key);
 
-IPersistentMap persistent();
+IPersistentMap<K,V> persistentMap();
 }

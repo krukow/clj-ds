@@ -12,7 +12,6 @@ package com.trifork.clj_ds;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -26,82 +25,64 @@ import java.util.concurrent.atomic.AtomicReference;
  Any errors are my own
  */
 
-public class PersistentHashMap extends APersistentMap implements IEditableCollection, IObj {
+public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, IObj {
 
 final int count;
 final INode root;
 final boolean hasNull;
-final Object nullValue;
+final V nullValue;
 final IPersistentMap _meta;
 
 final public static PersistentHashMap EMPTY = new PersistentHashMap(0, null, false, null);
 final private static Object NOT_FOUND = new Object();
 
-static public IPersistentMap create(Map other){
-	ITransientMap ret = EMPTY.asTransient();
-	for(Object o : other.entrySet())
+@SuppressWarnings("unchecked")
+static public <K,V> IPersistentMap<K,V> create(Map<? extends K,? extends V> other){
+	ITransientMap<K,V> ret = EMPTY.asTransient();
+	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
 		{
-		Map.Entry e = (Entry) o;
 		ret = ret.assoc(e.getKey(), e.getValue());
 		}
-	return ret.persistent();
+	return ret.persistentMap();
 }
 
 /*
  * @param init {key1,val1,key2,val2,...}
  */
-public static PersistentHashMap create(Object... init){
-	ITransientMap ret = EMPTY.asTransient();
+@SuppressWarnings("unchecked")
+public static <K,V> PersistentHashMap<K,V> create(Object... init){
+	ITransientMap<K,V> ret = EMPTY.asTransient();
 	for(int i = 0; i < init.length; i += 2)
 		{
-		ret = ret.assoc(init[i], init[i + 1]);
+			K k = (K) init[i];
+			V v = (V) init[i+1];
+		ret = ret.assoc(k, v);
 		}
-	return (PersistentHashMap) ret.persistent();
+	return (PersistentHashMap<K,V>) ret.persistentMap();
 }
 
-public static PersistentHashMap createWithCheck(Object... init){
-	ITransientMap ret = EMPTY.asTransient();
-	for(int i = 0; i < init.length; i += 2)
-		{
-		ret = ret.assoc(init[i], init[i + 1]);
-		if(ret.count() != i/2 + 1)
-			throw new IllegalArgumentException("Duplicate key: " + init[i]);
-		}
-	return (PersistentHashMap) ret.persistent();
-}
 
-static public PersistentHashMap create(ISeq items){
-	ITransientMap ret = EMPTY.asTransient();
+static public <K,V> PersistentHashMap<K,V> create(ISeq items){
+	ITransientMap<K,V> ret = EMPTY.asTransient();
 	for(; items != null; items = items.next().next())
 		{
 		if(items.next() == null)
 			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-		ret = ret.assoc(items.first(), RT.second(items));
+		ret = ret.assoc((K) items.first(), (V) RT.second(items));
 		}
-	return (PersistentHashMap) ret.persistent();
+	return (PersistentHashMap<K,V>) ret.persistentMap();
 }
 
-static public PersistentHashMap createWithCheck(ISeq items){
-	ITransientMap ret = EMPTY.asTransient();
-	for(int i=0; items != null; items = items.next().next(), ++i)
-		{
-		if(items.next() == null)
-			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-		ret = ret.assoc(items.first(), RT.second(items));
-		if(ret.count() != i + 1)
-			throw new IllegalArgumentException("Duplicate key: " + items.first());
-		}
-	return (PersistentHashMap) ret.persistent();
-}
 
 /*
  * @param init {key1,val1,key2,val2,...}
  */
-public static PersistentHashMap create(IPersistentMap meta, Object... init){
+@SuppressWarnings("unchecked")
+public static <K,V> PersistentHashMap<K,V> create(IPersistentMap meta, Object... init){
 	return create(init).withMeta(meta);
 }
 
-PersistentHashMap(int count, INode root, boolean hasNull, Object nullValue){
+PersistentHashMap(int count, INode root, boolean hasNull, V nullValue){
 	this.count = count;
 	this.root = root;
 	this.hasNull = hasNull;
@@ -109,7 +90,7 @@ PersistentHashMap(int count, INode root, boolean hasNull, Object nullValue){
 	this._meta = null;
 }
 
-public PersistentHashMap(IPersistentMap meta, int count, INode root, boolean hasNull, Object nullValue){
+public PersistentHashMap(IPersistentMap meta, int count, INode root, boolean hasNull, V nullValue){
 	this._meta = meta;
 	this.count = count;
 	this.root = root;
@@ -123,64 +104,82 @@ public boolean containsKey(Object key){
 	return (root != null) ? root.find(0, Util.hash(key), key, NOT_FOUND) != NOT_FOUND : false;
 }
 
-public IMapEntry entryAt(Object key){
+public IMapEntry<K,V> entryAt(K key){
 	if(key == null)
-		return hasNull ? new MapEntry(null, nullValue) : null;
+		return hasNull ? new MapEntry<K,V>(null, nullValue) : null;
 	return (root != null) ? root.find(0, Util.hash(key), key) : null;
 }
 
-public IPersistentMap assoc(Object key, Object val){
+public IPersistentMap<K,V> assoc(K key, V val){
 	if(key == null) {
 		if(hasNull && val == nullValue)
 			return this;
-		return new PersistentHashMap(meta(), hasNull ? count : count + 1, root, true, val);
+		return new PersistentHashMap<K,V>(meta(), hasNull ? count : count + 1, root, true, val);
 	}
 	Box addedLeaf = new Box(null);
 	INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root) 
 			.assoc(0, Util.hash(key), key, val, addedLeaf);
 	if(newroot == root)
 		return this;
-	return new PersistentHashMap(meta(), addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
+	return new PersistentHashMap<K,V>(meta(), addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
 }
 
-public Object valAt(Object key, Object notFound){
+public V valAt(K key, V notFound){
 	if(key == null)
 		return hasNull ? nullValue : notFound;
-	return root != null ? root.find(0, Util.hash(key), key, notFound) : notFound;
+	return (V) (root != null ? root.find(0, Util.hash(key), key, notFound) : notFound);
 }
 
-public Object valAt(Object key){
+public V valAt(K key){
 	return valAt(key, null);
 }
 
-public IPersistentMap assocEx(Object key, Object val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
 	if(containsKey(key))
 		throw new Exception("Key already present");
 	return assoc(key, val);
 }
 
-public IPersistentMap without(Object key){
+public IPersistentMap<K,V> without(K key){
 	if(key == null)
-		return hasNull ? new PersistentHashMap(meta(), count - 1, root, false, null) : this;
+		return hasNull ? new PersistentHashMap<K,V>(meta(), count - 1, root, false, null) : this;
 	if(root == null)
 		return this;
 	INode newroot = root.without(0, Util.hash(key), key);
 	if(newroot == root)
 		return this;
-	return new PersistentHashMap(meta(), count - 1, newroot, hasNull, nullValue); 
+	return new PersistentHashMap<K,V>(meta(), count - 1, newroot, hasNull, nullValue); 
 }
 
-public Iterator iterator(){
-	return new SeqIterator(seq());
+public Iterator<Map.Entry<K, V>> iterator(){
+	return new Iterator<Map.Entry<K, V>>() {
+		ISeq<IMapEntry<K, V>> seq = seq();
+
+		public boolean hasNext() {
+			return seq != null;
+		}
+
+		@Override
+		public Map.Entry<K, V> next() {
+			Entry<K,V> first = seq.first();
+			seq = seq.next();
+			return first;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	};
 }
 
 public int count(){
 	return count;
 }
 
-public ISeq seq(){
-	ISeq s = root != null ? root.nodeSeq() : null; 
-	return hasNull ? new Cons(new MapEntry(null, nullValue), s) : s;
+public ISeq<IMapEntry<K, V>> seq(){
+	ISeq<IMapEntry<K, V>> s = root != null ? root.nodeSeq() : null; 
+	return hasNull ? new Cons<IMapEntry<K, V>>(new MapEntry<K,V>(null, nullValue), s) : s;
 }
 
 public IPersistentCollection empty(){
@@ -204,20 +203,20 @@ public IPersistentMap meta(){
 	return _meta;
 }
 
-static final class TransientHashMap extends ATransientMap {
+static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 	AtomicReference<Thread> edit;
 	INode root;
 	int count;
 	boolean hasNull;
-	Object nullValue;
+	V nullValue;
 	final Box leafFlag = new Box(null);
 
 
-	TransientHashMap(PersistentHashMap m) {
+	TransientHashMap(PersistentHashMap<K,V> m) {
 		this(new AtomicReference<Thread>(Thread.currentThread()), m.root, m.count, m.hasNull, m.nullValue);
 	}
 	
-	TransientHashMap(AtomicReference<Thread> edit, INode root, int count, boolean hasNull, Object nullValue) {
+	TransientHashMap(AtomicReference<Thread> edit, INode root, int count, boolean hasNull, V nullValue) {
 		this.edit = edit;
 		this.root = root; 
 		this.count = count; 
@@ -225,10 +224,10 @@ static final class TransientHashMap extends ATransientMap {
 		this.nullValue = nullValue;
 	}
 
-	ITransientMap doAssoc(Object key, Object val) {
+	ITransientMap<K,V> doAssoc(K key, V val) {
 		if (key == null) {
 			if (this.nullValue != val)
-				this.nullValue = val;
+				this.nullValue = (V) val;
 			if (!hasNull) {
 				this.count++;
 				this.hasNull = true;
@@ -245,7 +244,7 @@ static final class TransientHashMap extends ATransientMap {
 		return this;
 	}
 
-	ITransientMap doWithout(Object key) {
+	ITransientMap<K,V> doWithout(K key) {
 		if (key == null) {
 			if (!hasNull) return this;
 			hasNull = false;
@@ -263,12 +262,12 @@ static final class TransientHashMap extends ATransientMap {
 		return this;
 	}
 
-	IPersistentMap doPersistent() {
+	IPersistentMap<K,V> doPersistent() {
 		edit.set(null);
-		return new PersistentHashMap(count, root, hasNull, nullValue);
+		return new PersistentHashMap<K,V>(count, root, hasNull, nullValue);
 	}
 
-	Object doValAt(Object key, Object notFound) {
+	V doValAt(K key, V notFound) {
 		if (key == null)
 			if (hasNull)
 				return nullValue;
@@ -276,7 +275,7 @@ static final class TransientHashMap extends ATransientMap {
 				return notFound;
 		if (root == null)
 			return null;
-		return root.find(0, Util.hash(key), key, notFound);
+		return (V) root.find(0, Util.hash(key), key, notFound);
 	}
 
 	int doCount() {
@@ -291,6 +290,12 @@ static final class TransientHashMap extends ATransientMap {
 			throw new IllegalAccessError("Transient used by non-owner thread");
 		throw new IllegalAccessError("Transient used after persistent! call");
 	}
+
+	public IPersistentCollection persistent() {
+		// TODO Auto-generated method stub
+		return persistentMap();
+	}
+
 }
 
 static interface INode extends Serializable {

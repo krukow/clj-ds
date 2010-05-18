@@ -12,7 +12,7 @@
 
 package com.trifork.clj_ds;
 
-public abstract class ATransientSet extends AFn implements ITransientSet{
+public abstract class ATransientSet<T> extends AFn implements ITransientSet<T>{
 	ITransientMap impl;
 
 	ATransientSet(ITransientMap impl) {
@@ -23,24 +23,24 @@ public abstract class ATransientSet extends AFn implements ITransientSet{
 		return impl.count();
 	}
 
-	public ITransientSet conj(Object val) {
+	public ITransientSet<T> conj(T val) {
 		ITransientMap m = impl.assoc(val, val);
 		if (m != impl) this.impl = m;
 		return this;
 	}
 
-	public boolean contains(Object key) {
+	public boolean contains(T key) {
 		return this != impl.valAt(key, this);
 	}
 
-	public ITransientSet disjoin(Object key) throws Exception {
+	public ITransientSet<T> disjoin(T key) throws Exception {
 		ITransientMap m = impl.without(key);
 		if (m != impl) this.impl = m;
 		return this;
 	}
 
-	public Object get(Object key) {
-		return impl.valAt(key);
+	public Boolean get(T key) {
+		return (Boolean) impl.valAt(key);
 	}
 
 	public Object invoke(Object key, Object notFound) throws Exception {

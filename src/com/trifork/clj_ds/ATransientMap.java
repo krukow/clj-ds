@@ -15,67 +15,47 @@ import java.util.Map;
 import com.trifork.clj_ds.PersistentHashMap.INode;
 
 
-abstract class ATransientMap extends AFn implements ITransientMap {
+abstract class ATransientMap<K,V> extends AFn implements ITransientMap<K,V>{
 	abstract void ensureEditable();
-	abstract ITransientMap doAssoc(Object key, Object val);
-	abstract ITransientMap doWithout(Object key);
-	abstract Object doValAt(Object key, Object notFound);
+	abstract ITransientMap<K,V> doAssoc(K key, V val);
+	abstract ITransientMap<K,V> doWithout(K key);
+	abstract V doValAt(K key, V notFound);
 	abstract int doCount();
-	abstract IPersistentMap doPersistent();
+	abstract IPersistentMap<K,V> doPersistent();
 
-	public ITransientMap conj(Object o) {
+	public ITransientMap<K,V> conj(Map.Entry<K, V> o) {
 		ensureEditable();
-		if(o instanceof Map.Entry)
-			{
-			Map.Entry e = (Map.Entry) o;
-		
-			return assoc(e.getKey(), e.getValue());
-			}
-		else if(o instanceof IPersistentVector)
-			{
-			IPersistentVector v = (IPersistentVector) o;
-			if(v.count() != 2)
-				throw new IllegalArgumentException("Vector arg to map conj must be a pair");
-			return assoc(v.nth(0), v.nth(1));
-			}
-		
-		ITransientMap ret = this;
-		for(ISeq es = RT.seq(o); es != null; es = es.next())
-			{
-			Map.Entry e = (Map.Entry) es.first();
-			ret = ret.assoc(e.getKey(), e.getValue());
-			}
-		return ret;
+		return assoc(o.getKey(), o.getValue());
 	}
 
 	public final Object invoke(Object arg1) throws Exception{
-		return valAt(arg1);
+		return valAt((K) arg1);
 	}
 
 	public final Object invoke(Object arg1, Object notFound) throws Exception{
-		return valAt(arg1, notFound);
+		return valAt((K)arg1, (V) notFound);
 	}
 
-	public final Object valAt(Object key) {
+	public final V valAt(K key) {
 		return valAt(key, null);
 	}
 
-	public final ITransientMap assoc(Object key, Object val) {
+	public final ITransientMap<K,V> assoc(K key, V val) {
 		ensureEditable();
 		return doAssoc(key, val);
 	}
 
-	public final ITransientMap without(Object key) {
+	public final ITransientMap<K,V> without(K key) {
 		ensureEditable();
 		return doWithout(key);
 	}
 
-	public final IPersistentMap persistent() {
+	public final IPersistentMap<K,V> persistentMap() {
 		ensureEditable();
 		return doPersistent();
 	}
 
-	public final Object valAt(Object key, Object notFound) {
+	public final V valAt(K key, V notFound) {
 		ensureEditable();
 		return doValAt(key, notFound);
 	}
