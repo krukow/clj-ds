@@ -11,6 +11,7 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -151,7 +152,7 @@ public IPersistentMap<K,V> without(K key){
 	return new PersistentHashMap<K,V>(meta(), count - 1, newroot, hasNull, nullValue); 
 }
 
-public Iterator<Map.Entry<K, V>> iterator(){
+public Iterator<Map.Entry<K, V>> iterator2(){
 	return new Iterator<Map.Entry<K, V>>() {
 		ISeq<IMapEntry<K, V>> seq = seq();
 
@@ -172,6 +173,31 @@ public Iterator<Map.Entry<K, V>> iterator(){
 		}
 	};
 }
+
+public Iterator<Map.Entry<K, V>> iterator(){
+	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt() : new EmptyIterator(); 
+	return hasNull ? s : s;//case of null value... TODO
+}
+
+public static final class EmptyIterator implements Iterator {
+
+	@Override
+	public boolean hasNext() {
+		return false;
+	}
+
+	@Override
+	public Object next() {
+		throw new IllegalStateException();
+	}
+
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
+	
+}
+
 
 public int count(){
 	return count;
@@ -301,6 +327,8 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 static interface INode extends Serializable {
 	INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
 
+	Iterator nodeIt();
+
 	INode without(int shift, int hash, Object key);
 
 	IMapEntry find(int shift, int hash, Object key);
@@ -323,6 +351,43 @@ final static class ArrayNode implements INode{
 		this.array = array;
 		this.edit = edit;
 		this.count = count;
+	}
+	
+	static final class ArrayNodeIterator implements Iterator {
+		int index;
+		Iterator current;
+		INode[] array;
+		public ArrayNodeIterator(ArrayNode an) {
+			array = an.array;
+			moveCurIfNeeded();
+		}
+		public boolean hasNext() {
+			while (current != null && !current.hasNext()) {
+				moveCurIfNeeded();
+			}
+			return current != null && current.hasNext(); 
+		}
+
+		private void moveCurIfNeeded() {
+			if (current != null && current.hasNext()) return;
+			while (index < array.length && array[index] == null) {index += 1;};
+			current = (index == array.length) ? null : array[index++].nodeIt(); 
+		}
+
+		@Override
+		public Object next() {
+			return current.next();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();			
+		}
+		
+	}
+	
+	public Iterator nodeIt() {
+		return new ArrayNodeIterator(this);
 	}
 
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
@@ -477,6 +542,8 @@ final static class ArrayNode implements INode{
 		}
 		
 	}
+
+	
 }
 
 final static class BitmapIndexedNode implements INode{
@@ -496,6 +563,69 @@ final static class BitmapIndexedNode implements INode{
 		this.edit = edit;
 	}
 
+	public Iterator nodeIt() {
+		return new BitmapIndexedNodeIterator(this);
+	}
+	
+	static final class BitmapIndexedNodeIterator implements Iterator{
+		BitmapIndexedNode node;
+		
+		int index;
+		int N;
+		Iterator current;
+		public BitmapIndexedNodeIterator(BitmapIndexedNode node) {
+			this.node = node;
+			N = node.array.length;
+			moveCurIfNeeded();
+		}
+		public boolean hasNext() {
+			moveCurIfNeeded();
+			if (current == null && index >= N) {
+				return false;
+			}
+			return true;
+		}
+
+		private void moveCurIfNeeded() {
+			if (current != null && current.hasNext()) return;
+			while (index < N) {
+				Object keyOrNull = node.array[index];
+				Object valOrNode = node.array[index+1];
+				if (keyOrNull == null) {
+					index += 2;
+					INode val = ((INode) valOrNode);
+					if (val != null) {
+						Iterator nodeIt  = val.nodeIt();
+						if (nodeIt.hasNext()) {
+							current = nodeIt;
+							return;
+						}
+					} 
+				} else {
+					return;
+				}
+			} 
+		}
+
+		@Override
+		public Object next() {
+			if (current != null) {
+				return current.next();
+			} else {
+				Object keyOrNull = node.array[index++];
+				Object valOrNode = node.array[index++];
+				return new MapEntry(keyOrNull, valOrNode);
+			}
+				
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();			
+		}		
+		
+	}
+	
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
 		int bit = bitpos(hash, shift);
 		int idx = index(bit);
@@ -734,7 +864,37 @@ final static class HashCollisionNode implements INode{
 		this.count = count;
 		this.array = array;
 	}
+	
+	static final class HashCollisionNodeIterator implements Iterator {
+		Object[] array;
+		int index;
+		int count;
+		public HashCollisionNodeIterator(HashCollisionNode node) {
+			this.array = node.array;
+			this.count = node.count;
+		}
+		public boolean hasNext() {
+			 return index < count * 2;
+		}
+		
+		public Object next() {
+			Object k = array[index++];
+			Object v = array[index++];
+			return new MapEntry(k, v);
+		}
 
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();			
+		}
+		
+	}
+	
+	public Iterator nodeIt() {
+		return new HashCollisionNodeIterator(this);
+	}
+
+	
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
 		if(hash == this.hash) {
 			int idx = findIndex(key);

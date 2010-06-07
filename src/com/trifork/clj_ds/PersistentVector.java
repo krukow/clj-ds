@@ -13,9 +13,13 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.trifork.clj_ds.PersistentHashMap.INode;
 
 public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>{
 
@@ -232,6 +236,95 @@ public IChunkedSeq<T> chunkedSeq(){
 public ISeq<T> seq(){
 	return chunkedSeq();
 }
+
+final static class PersistentVectorIterator<T> implements Iterator<T> {
+	PersistentVector<T> vec;
+	int offset, sft;
+	Stack<MapEntry<Integer, Object[]>> path;
+	Object[] current;
+	int currentIndex;
+	
+	public PersistentVectorIterator(PersistentVector<T> vec) {
+		this.vec = vec;
+		offset = vec.tailoff();
+		sft = vec.shift;
+		path = initialPath();
+		MapEntry<Integer,Object[]> el = path.peek();
+		if (el.key() == -1) {
+			current = el.val();
+		} else {
+			current = ((Node) el.val()[el.key()]).array;
+		}
+	}
+	@Override
+	public boolean hasNext() {
+		ensureCurrentReady();
+		return (current != null && currentIndex < current.length);
+		
+	}
+	
+	private void ensureCurrentReady() {
+		if (current != null && currentIndex < current.length) {
+			return;
+		}//else current is null or exhausted. Find next
+		Object[] last = current;
+		current = findNextArray();
+		if (current != last) {
+			currentIndex = 0;
+		}
+	}
+	private Object[] findNextArray() {
+		if (path.isEmpty()) {return null;}
+		while(path.peek().getKey() != -1) {
+			MapEntry<Integer, Object[]> loc = path.pop();
+			int idx = loc.key();
+			Object[] arr = loc.val();
+			idx += 1;
+			if (idx < arr.length) {
+				Node next = (Node) arr[idx];
+				if (next == null) {
+					continue;
+				}
+				path.push(new MapEntry(idx, arr));
+				for(int level = sft - (path.size() - 1) * 5; level > 0; level -= 5) {
+					path.push(new MapEntry<Integer, Object[]>(0,next.array));
+					next = (Node) next.array[0];
+				}
+				return next.array;
+				
+			}	
+		}
+		return path.pop().val();
+	}
+	private Stack<MapEntry<Integer, Object[]>> initialPath() {
+		Stack<MapEntry<Integer, Object[]>>  res = new Stack<MapEntry<Integer, Object[]>>();
+		res.push(new MapEntry<Integer, Object[]>(-1, vec.tail));	
+		Node node = vec.root;
+		for(int level = sft; level > 0; level -= 5) {
+			res.push(new MapEntry<Integer, Object[]>(0,node.array));
+			node = (Node) node.array[0];
+			if (node == null) {
+				res.pop();
+				break;
+			}
+		}
+		return res;	
+	}
+	@Override
+	public T next() {
+		return (T) current[currentIndex++];
+	}
+	
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
+}
+
+public Iterator<T> iterator(){
+	return new PersistentVectorIterator(this);
+}
+
 
 static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T>{
 

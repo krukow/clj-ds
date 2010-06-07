@@ -12,7 +12,10 @@
 
 package com.trifork.clj_ds;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T> {
 
@@ -86,6 +89,28 @@ PersistentHashSet(IPersistentMap meta, IPersistentMap impl){
 	super(impl);
 	this._meta = meta;
 }
+
+public Iterator<T> iterator(){
+	return new Iterator<T>() {
+		final Iterator<Map.Entry> iterator = impl.iterator();
+		
+		public boolean hasNext() {
+			return iterator.hasNext();
+		}
+
+		public T next() {
+			Map.Entry n = iterator.next();
+			return (T) n.getKey();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		} 
+		
+	};
+}
+
 
 public IPersistentSet<T> disjoin(T key) throws Exception{
 	if(contains(key))
