@@ -16,10 +16,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.trifork.clj_ds.PersistentHashMap.INode;
 
 public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>{
 
@@ -48,8 +45,15 @@ final Object[] tail;
 final IPersistentMap _meta;
 
 
+@SuppressWarnings("unchecked")
 public final static PersistentVector EMPTY = new PersistentVector(0, 5, EMPTY_NODE, new Object[]{});
 
+@SuppressWarnings("unchecked")
+static public <T> PersistentVector<T> emptyVector() {
+	return EMPTY;
+}
+
+@SuppressWarnings("unchecked")
 static public <T> PersistentVector<T> create(ISeq<? extends T> items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(; items != null; items = items.next())
@@ -57,6 +61,7 @@ static public <T> PersistentVector<T> create(ISeq<? extends T> items){
 	return ret.persistentMap();
 }
 
+@SuppressWarnings("unchecked")
 static public <T> PersistentVector<T> create(List<? extends T> items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(T item : items)
@@ -64,6 +69,7 @@ static public <T> PersistentVector<T> create(List<? extends T> items){
 	return ret.persistentMap();
 }
 
+@SuppressWarnings("unchecked")
 static public <T> PersistentVector<T> create(T ... items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(T item : items)
@@ -239,14 +245,13 @@ public ISeq<T> seq(){
 
 final static class PersistentVectorIterator<T> implements Iterator<T> {
 	PersistentVector<T> vec;
-	int offset, sft;
+	int sft;
 	Stack<MapEntry<Integer, Object[]>> path;
 	Object[] current;
 	int currentIndex;
 	
 	public PersistentVectorIterator(PersistentVector<T> vec) {
 		this.vec = vec;
-		offset = vec.tailoff();
 		sft = vec.shift;
 		path = initialPath();
 		MapEntry<Integer,Object[]> el = path.peek();

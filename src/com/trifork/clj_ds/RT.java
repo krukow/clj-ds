@@ -80,8 +80,6 @@ public class RT {
 			return IteratorSeq.create(((Iterable) coll).iterator());
 		else if (coll.getClass().isArray())
 			return ArraySeq.createFromObject(coll);
-		else if (coll instanceof CharSequence)
-			return StringSeq.create((CharSequence) coll);
 		else if (coll instanceof Map)
 			return seq(((Map) coll).entrySet());
 		else {
@@ -812,32 +810,6 @@ public class RT {
 		}
 
 		return readRet(ret);
-	}
-
-	static public int getLineNumber(Reader r) {
-		if (r instanceof LineNumberingPushbackReader)
-			return ((LineNumberingPushbackReader) r).getLineNumber();
-		return 0;
-	}
-
-	static public LineNumberingPushbackReader getLineNumberingReader(Reader r) {
-		if (isLineNumberingReader(r))
-			return (LineNumberingPushbackReader) r;
-		return new LineNumberingPushbackReader(r);
-	}
-
-	static public boolean isLineNumberingReader(Reader r) {
-		return r instanceof LineNumberingPushbackReader;
-	}
-
-	static public String resolveClassNameInContext(String className) {
-		// todo - look up in context var
-		return className;
-	}
-
-	static public boolean suppressRead() {
-		// todo - look up in suppress-read var
-		return false;
 	}
 
 	static public String printString(Object x) {

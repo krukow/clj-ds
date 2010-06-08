@@ -1,0 +1,102 @@
+This library has been extracted from the master branch of Clojure (http://clojure.org)
+
+version 1.2 (as of May 2010)
+
+http://github.com/richhickey/clojure
+
+created by Rich Hickey. The core data structures and algorithms are due to him.
+This library is distributed with the same license as the Clojure programming 
+language itself (EPL, see file epl-v10.html).
+
+It has been modified by Karl Krukow <karl.krukow@gmail.com>, and mistakes introduced are mine.
+
+*WHY*
+First, I love Clojure :) ... 
+Unfortunately sometimes clients require that I use Java...
+
+The data structures used in the Clojure programming language are a great
+implementation of a number of useful persistent data structures 
+(see e.g., the section on immutable data structures on
+http://clojure.org/functional_programming). 
+
+However, these data structures are tailor-made to work optimally in the
+Clojure programming language, and while it is possible to use these from
+Java (since Clojure is distributed as a .jar file), it is inconvenient
+for a number of reasons (see below). Since it is (unfortunately) not always
+possible to use Clojure, I've created this library to at least reap some of the
+Clojure benefits in environments constrained to Java. 
+Beyond Java, other JVM languages like Erjang, Scala, JRuby and Groovy may benefit
+from immutability & persistence, and from this implementation.
+
+*Advantages of clj-ds when constrained to working with Java*
+Currently the Clojure data structures are implemented in Java. In the future,
+all of Clojure will be implemented in Clojure itself (known as "Clojure-in-Clojure").
+This has many advantages for Clojure, but when it happens the data structures will 
+probably be even more intertwined with the rest of the language, 
+and may be even more inconvenient to use in a Java context.
+
+The clj-ds project will maintain Java versions of the code, and where possible attempt
+to "port" improvements made in the Clojure versions back into clj-ds. Thus keeping maintained
+versions of the Java data structures. 
+
+In the current Clojure version, calling certain methods on PersistentHashMap requires
+loading the entire Clojure runtime, including the bootstrap process. This takes about one second.
+This means that the first time one of these methods is called, a Java user will experience a
+slight delay (and a memory-usage increase). Further, many of the Clojure runtime 
+Java classes are not needed when only support for persistent data structures 
+is wanted (e.g., the compiler).
+
+The clj-ds library is not dependent on the Clojure runtime nor does it run any
+Clojure bootstrap process, e.g., the classes that deal with compilation have been removed. 
+This results in a smaller library, and the mentioned delay does not occur.
+
+Clojure is a dynamically typed language. Java is statically typed, and supports
+'generics' from version 5. A Java user would expect generics support from a Java
+data structure library, and the Clojure version doesn't have this. 
+clj-ds will support generics.
+
+Finally, a slight improvement. 
+Certain of the Clojure data structure methods use Clojure's 'seq' abstraction
+in the implementation of the Java 'iterator' pattern. It is possible, to make
+slightly more efficient iterators using a tailor made iterator. clj-ds does this.
+
+Example stats for iterating through various data structures:
+(20-40% improvement, matters only for quite large structures)
+
+PersistentHashSet:
+----
+500.000 elements
+58 ms (Java avg.)
+192 ms (Pure Clojure avg)
+106 ms (clj-ds avg)
+---
+1 mio elements:
+104 ms (Java avg.)
+497 ms (Pure Clojure avg)
+371 ms (clj-ds avg)
+
+---
+PersistentHashMap
+---
+500.000 elements
+94 ms (Java avg.)
+189 ms (Pure Clojure avg)
+131 ms (clj-ds avg)
+
+1 mio elements:
+128 ms (Java avg.)
+549 ms (Pure Clojure avg)
+394 ms (clj-ds avg)
+
+---
+PersistentVector 
+---
+1 mio elements:
+104 ms (Java avg.)
+122 ms (Pure Clojure avg)
+104 ms (clj-ds avg)
+
+2 mio elements:
+186 ms (Java avg.)
+223 ms (Pure Clojure avg)
+184 ms (clj-ds avg)

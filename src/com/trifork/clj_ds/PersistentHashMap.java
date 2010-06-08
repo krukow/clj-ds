@@ -11,7 +11,6 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,6 +35,11 @@ final IPersistentMap _meta;
 
 final public static PersistentHashMap EMPTY = new PersistentHashMap(0, null, false, null);
 final private static Object NOT_FOUND = new Object();
+
+@SuppressWarnings("unchecked")
+final public static <K,V> PersistentHashMap<K, V> emptyMap() {
+	return EMPTY;
+}
 
 @SuppressWarnings("unchecked")
 static public <K,V> IPersistentMap<K,V> create(Map<? extends K,? extends V> other){

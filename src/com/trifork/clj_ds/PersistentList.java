@@ -10,43 +10,19 @@
 
 package com.trifork.clj_ds;
 
-import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 public class PersistentList<T> extends ASeq<T> implements IPersistentList<T>, IReduce, List<T>, Counted {
 
 private final T _first;
 private final IPersistentList<T> _rest;
 private final int _count;
-
-public static IFn creator = new RestFn(){
-	final public int getRequiredArity(){
-		return 0;
-	}
-
-	final protected Object doInvoke(Object args) throws Exception{
-		if(args instanceof ArraySeq)
-			{
-			Object[] argsarray = (Object[]) ((ArraySeq) args).array;
-			IPersistentList ret = EMPTY;
-			for(int i = argsarray.length - 1; i >= 0; --i)
-				ret = (IPersistentList) ret.cons(argsarray[i]);
-			return ret;
-			}
-		LinkedList list = new LinkedList();
-		for(ISeq s = RT.seq(args); s != null; s = s.next())
-			list.add(s.first());
-		return create(list);
-	}
-
-	public IObj withMeta(IPersistentMap meta){
-		throw new UnsupportedOperationException();
-	}
-
-	public IPersistentMap meta(){
-		return null;
-	}
-};
 
 final public static EmptyList EMPTY = new EmptyList(null);
 

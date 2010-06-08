@@ -15,12 +15,15 @@ package com.trifork.clj_ds;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T> {
 
 static public final PersistentHashSet EMPTY = new PersistentHashSet(null, PersistentHashMap.EMPTY);
 
+@SuppressWarnings("unchecked")
+static public final <T> PersistentHashSet<T> emptySet() {
+	return EMPTY;
+}
 final IPersistentMap _meta;
 
 public static <T> PersistentHashSet<T> create(T... init){
