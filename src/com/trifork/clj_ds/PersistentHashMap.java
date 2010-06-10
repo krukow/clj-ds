@@ -42,13 +42,13 @@ final public static <K,V> PersistentHashMap<K, V> emptyMap() {
 }
 
 @SuppressWarnings("unchecked")
-static public <K,V> IPersistentMap<K,V> create(Map<? extends K,? extends V> other){
+static public <K,V> PersistentHashMap<K,V> create(Map<K,V> other){
 	ITransientMap<K,V> ret = EMPTY.asTransient();
-	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
+	for(Map.Entry<K, V> e : other.entrySet())
 		{
 		ret = ret.assoc(e.getKey(), e.getValue());
 		}
-	return ret.persistentMap();
+	return (PersistentHashMap<K, V>) ret.persistentMap();
 }
 
 /*
