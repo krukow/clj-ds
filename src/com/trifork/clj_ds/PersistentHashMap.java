@@ -235,7 +235,7 @@ public ISeq<IMapEntry<K, V>> seq(){
 
 public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
 	if (hasNull) {throw new UnsupportedOperationException("not supported for maps with null entries yet");}
-	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, Util.hash(key), key) : null; 
+	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, Util.hash(key), key) : new EmptyIterator(); 
 	return s;
 }
 
