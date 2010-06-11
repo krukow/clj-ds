@@ -43,6 +43,7 @@
 		</jar>
 	</target>
 	<target name="test" depends="jartest">
+		<echo>Note: the tests take some time (about 5-10 minutes to run). Be patient.</echo>
 		<junit>
 			<classpath>
 				<pathelement location="${lib}/junit-4.8.2.jar" />

@@ -179,8 +179,29 @@ public Iterator<Map.Entry<K, V>> iterator2(){
 }
 
 public Iterator<Map.Entry<K, V>> iterator(){
-	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt() : new EmptyIterator(); 
-	return hasNull ? s : s;//case of null value... TODO
+	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt() : new EmptyIterator(); 
+	return hasNull ? new Iterator<Map.Entry<K, V>>(){
+		Iterator<Map.Entry<K, V>> i = s;
+		boolean nullReady = true;
+		public boolean hasNext() {
+			return nullReady || i.hasNext();
+		}
+
+		@Override
+		public Map.Entry<K, V> next() {
+			if (nullReady) {
+				nullReady = false;
+				return new MapEntry<K,V>(null, PersistentHashMap.this.nullValue);
+			}
+			return i.next();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+		
+	} : s;
 }
 
 public static final class EmptyIterator implements Iterator {
@@ -210,6 +231,12 @@ public int count(){
 public ISeq<IMapEntry<K, V>> seq(){
 	ISeq<IMapEntry<K, V>> s = root != null ? root.nodeSeq() : null; 
 	return hasNull ? new Cons<IMapEntry<K, V>>(new MapEntry<K,V>(null, nullValue), s) : s;
+}
+
+public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
+	if (hasNull) {throw new UnsupportedOperationException("not supported for maps with null entries yet");}
+	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, Util.hash(key), key) : null; 
+	return s;
 }
 
 public IPersistentCollection empty(){
@@ -328,10 +355,17 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 
 }
 
+static interface Position {
+	INode getINode();
+	int getIndex();
+}
+
 static interface INode extends Serializable {
 	INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
 
 	Iterator nodeIt();
+	
+	Iterator nodeItFrom(int shift, int hash, Object key);
 
 	INode without(int shift, int hash, Object key);
 
@@ -357,14 +391,38 @@ final static class ArrayNode implements INode{
 		this.count = count;
 	}
 	
+	public Iterator nodeItFrom(int shift, int hash, Object key) {
+		return new ArrayNodeIterator(this, shift, hash, key);
+	}
+	
 	static final class ArrayNodeIterator implements Iterator {
 		int index;
 		Iterator current;
 		INode[] array;
+		int shift, hash;
+		Object key;
 		public ArrayNodeIterator(ArrayNode an) {
 			array = an.array;
 			moveCurIfNeeded();
 		}
+		public ArrayNodeIterator(ArrayNode an, int shift, int hash, Object key) {
+			array = an.array;
+			this.shift = shift; 
+			this.hash = hash;
+			this.key = key;
+			moveCurTo();
+		}
+		
+		private void moveCurTo() {
+			index = mask(hash, shift);
+			INode node = array[index];
+			if(node == null)
+				return;
+			current = node.nodeItFrom(shift + 5, hash, key);
+			index += 1;
+			
+		}
+		
 		public boolean hasNext() {
 			while (current != null && !current.hasNext()) {
 				moveCurIfNeeded();
@@ -548,6 +606,7 @@ final static class ArrayNode implements INode{
 	}
 
 	
+	
 }
 
 final static class BitmapIndexedNode implements INode{
@@ -566,7 +625,10 @@ final static class BitmapIndexedNode implements INode{
 		this.array = array;
 		this.edit = edit;
 	}
-
+	
+	public Iterator nodeItFrom(int shift, int hash, Object key) {
+		return new BitmapIndexedNodeIterator(this, shift, hash, key);
+	}
 	public Iterator nodeIt() {
 		return new BitmapIndexedNodeIterator(this);
 	}
@@ -582,6 +644,39 @@ final static class BitmapIndexedNode implements INode{
 			N = node.array.length;
 			moveCurIfNeeded();
 		}
+		public BitmapIndexedNodeIterator(BitmapIndexedNode bitmapIndexedNode,
+				int shift, int hash, Object key) {
+			this.node = bitmapIndexedNode;
+			N = node.array.length;
+			moveCurTo(shift, hash, key);
+		}
+		private void moveCurTo(int shift, int hash, Object key) {
+			int bit = bitpos(hash, shift);
+			if((node.bitmap & bit) == 0)
+				return;
+			index = 2*node.index(bit);
+			Object keyOrNull = node.array[index];
+			Object valOrNode = node.array[index+1];
+			if(keyOrNull == null) {
+				index += 2;
+				INode val = ((INode) valOrNode);
+				if (val != null) {
+					Iterator nodeIt  = val.nodeItFrom(shift + 5, hash, key);
+					if (nodeIt.hasNext()) {
+						current = nodeIt;
+						return;
+					}
+				} 
+			} else {
+				if(Util.equals(key, keyOrNull)) {
+					return;//OK index points to key
+				} else {
+					throw new IllegalArgumentException("Key not found: "+key);
+				}
+					
+			}
+				
+		}
 		public boolean hasNext() {
 			moveCurIfNeeded();
 			if (current == null && index >= N) {
@@ -589,9 +684,10 @@ final static class BitmapIndexedNode implements INode{
 			}
 			return true;
 		}
-
+		//current != null => current.hasNext or index points to a valid key
 		private void moveCurIfNeeded() {
 			if (current != null && current.hasNext()) return;
+			current = null;
 			while (index < N) {
 				Object keyOrNull = node.array[index];
 				Object valOrNode = node.array[index+1];
@@ -874,8 +970,17 @@ final static class HashCollisionNode implements INode{
 		int index;
 		int count;
 		public HashCollisionNodeIterator(HashCollisionNode node) {
+			
 			this.array = node.array;
 			this.count = node.count;
+		}
+		public HashCollisionNodeIterator(HashCollisionNode hashCollisionNode,
+				int shift, int hash, Object key) {
+			this.array = hashCollisionNode.array;
+			this.count = hashCollisionNode.count;
+			int idx = hashCollisionNode.findIndex(key);
+			index = idx == -1 ? count * 2 : idx;
+			
 		}
 		public boolean hasNext() {
 			 return index < count * 2;
@@ -894,6 +999,9 @@ final static class HashCollisionNode implements INode{
 		
 	}
 	
+	public Iterator nodeItFrom(int shift, int hash, Object key) {
+		return new HashCollisionNodeIterator(this,shift,hash,key);
+	}
 	public Iterator nodeIt() {
 		return new HashCollisionNodeIterator(this);
 	}
