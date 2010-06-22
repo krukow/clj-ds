@@ -3,34 +3,22 @@
  */
 package com.trifork.clj_ds.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.experimental.categories.Categories.ExcludeCategory;
 
-import com.trifork.clj_ds.IMapEntry;
-import com.trifork.clj_ds.IPersistentList;
 import com.trifork.clj_ds.IPersistentMap;
-import com.trifork.clj_ds.ISeq;
-import com.trifork.clj_ds.MapEntry;
 import com.trifork.clj_ds.PersistentHashMap;
-import com.trifork.clj_ds.PersistentList;
-import com.trifork.clj_ds.PersistentVector;
-import com.trifork.clj_ds.RT;
 
 /**
  * @author krukow
@@ -76,46 +64,6 @@ public class PersistentHashMapTest {
 		 assertTrue(nullKey);
 	}
 
-	@Test
-	public final void testFailIteratorFrom() {
-		int[] inp = new int[]{
-				
-				768,290,483,
-				869,
-				263,
-				42,
-				878,
-				818,
-				439,
-				152,
-				984,
-				217,
-				761,
-				218,
-				250,
-				219,
-				381,
-				829,
-				574,
-				639
-		};
-		IPersistentMap<Integer, Integer> genMap = PersistentHashMap.emptyMap();
-		for (int i=0;i<inp.length;i++) {
-			genMap = genMap.assoc(inp[i], inp[i]);
-		}
-		
-		PersistentHashMap<Integer, Integer> hm = (PersistentHashMap<Integer, Integer>) genMap;
-		int index = 10;
-		int count = 0;
-		for (Iterator<Map.Entry<Integer, Integer>> iterator = hm.iteratorFrom(inp[index]); iterator.hasNext();) {
-			Entry<Integer, Integer> next = iterator.next();
-			assertEquals(inp[index],(int) next.getKey());
-			index++;
-			count++;
-		}
-		assertEquals(10, count);
-		
-	}
 	
 	@Test
 	public final void testIteratorFrom() {
@@ -234,5 +182,29 @@ public class PersistentHashMapTest {
 		assertEquals(N, hs.size());
 		
 	}
-
+	
+	@Test
+	public final void testRandomReverseIterator() {
+		final int N = 33000;
+		IPersistentMap<Double, String> genMap = PersistentHashMap.emptyMap();
+		for (int i=0;i<N;i++) {
+			double random = Math.random();
+			genMap = genMap.assoc(random, ""+random);
+			
+		}
+		List lst = new ArrayList();
+		for (Map.Entry<Double, String> e: genMap) {
+			lst.add(e.getKey());
+		}
+		for (Iterator<Map.Entry<Double, Double>> it = ((PersistentHashMap) genMap).reverseIterator();it.hasNext();) {
+			Map.Entry<Double, Double> e= it.next();
+			Double removed = (Double) lst.remove(lst.size()-1);
+			assertEquals(removed, e.getKey());
+			assertEquals(removed+"", e.getValue());
+		}
+		assertEquals(0, lst.size());
+		
+	}
+	
+	
 }

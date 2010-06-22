@@ -179,7 +179,7 @@ public Iterator<Map.Entry<K, V>> iterator2(){
 }
 
 public Iterator<Map.Entry<K, V>> iterator(){
-	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt() : new EmptyIterator(); 
+	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator(); 
 	return hasNull ? new Iterator<Map.Entry<K, V>>(){
 		Iterator<Map.Entry<K, V>> i = s;
 		boolean nullReady = true;
@@ -203,6 +203,36 @@ public Iterator<Map.Entry<K, V>> iterator(){
 		
 	} : s;
 }
+
+public Iterator<Map.Entry<K, V>> reverseIterator(){
+	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(true) : new EmptyIterator(); 
+	return hasNull ? new Iterator<Map.Entry<K, V>>(){
+		Iterator<Map.Entry<K, V>> i = s;
+		boolean nullReady = true;
+		public boolean hasNext() {
+			return nullReady || i.hasNext();
+		}
+
+		@Override
+		public Map.Entry<K, V> next() {
+			if (i.hasNext()) {
+				return i.next();
+			} else if (nullReady) {
+				nullReady = false;
+				return new MapEntry<K,V>(null, PersistentHashMap.this.nullValue);
+			}
+			throw new IllegalStateException();
+			
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+		
+	} : s;
+}
+
 
 public static final class EmptyIterator implements Iterator {
 
@@ -363,7 +393,7 @@ static interface Position {
 static interface INode extends Serializable {
 	INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
 
-	Iterator nodeIt();
+	Iterator nodeIt(boolean reverse);
 	
 	Iterator nodeItFrom(int shift, int hash, Object key);
 
@@ -395,7 +425,7 @@ final static class ArrayNode implements INode{
 		return new ArrayNodeIterator(this, shift, hash, key);
 	}
 	
-	static final class ArrayNodeIterator implements Iterator {
+	static class ArrayNodeIterator implements Iterator {
 		int index;
 		Iterator current;
 		INode[] array;
@@ -433,7 +463,7 @@ final static class ArrayNode implements INode{
 		private void moveCurIfNeeded() {
 			if (current != null && current.hasNext()) return;
 			while (index < array.length && array[index] == null) {index += 1;};
-			current = (index == array.length) ? null : array[index++].nodeIt(); 
+			current = (index == array.length) ? null : array[index++].nodeIt(false); 
 		}
 
 		@Override
@@ -447,9 +477,43 @@ final static class ArrayNode implements INode{
 		}
 		
 	}
+	static final class ReverseArrayNodeIterator implements Iterator {
+		int index;
+		Iterator current;
+		INode[] array;
+		int shift, hash;
+		Object key;
+		public ReverseArrayNodeIterator(ArrayNode an) {
+			this.array = an.array;
+			this.index = array.length-1;
+			moveCurIfNeeded();
+		}
+		private void moveCurIfNeeded() {
+			if (current != null && current.hasNext()) return;
+			while (index >= 0 && array[index] == null) {index -= 1;};
+			current = (index < 0) ? null : array[index--].nodeIt(true); 
+		}
+		public boolean hasNext() {
+			while (current != null && !current.hasNext()) {
+				moveCurIfNeeded();
+			}
+			return current != null && current.hasNext(); 
+		}
+
+
+		@Override
+		public Object next() {
+			return current.next();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();			
+		}
+	}
 	
-	public Iterator nodeIt() {
-		return new ArrayNodeIterator(this);
+	public Iterator nodeIt(boolean reverse) {
+		return reverse?new ReverseArrayNodeIterator(this): new ArrayNodeIterator(this);
 	}
 
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
@@ -629,11 +693,11 @@ final static class BitmapIndexedNode implements INode{
 	public Iterator nodeItFrom(int shift, int hash, Object key) {
 		return new BitmapIndexedNodeIterator(this, shift, hash, key);
 	}
-	public Iterator nodeIt() {
-		return new BitmapIndexedNodeIterator(this);
+	public Iterator nodeIt(boolean reverse) {
+		return reverse? new ReverseBitmapIndexedNodeIterator(this) : new BitmapIndexedNodeIterator(this);
 	}
 	
-	static final class BitmapIndexedNodeIterator implements Iterator{
+	static class BitmapIndexedNodeIterator implements Iterator{
 		BitmapIndexedNode node;
 		
 		int index;
@@ -695,7 +759,7 @@ final static class BitmapIndexedNode implements INode{
 					index += 2;
 					INode val = ((INode) valOrNode);
 					if (val != null) {
-						Iterator nodeIt  = val.nodeIt();
+						Iterator nodeIt  = val.nodeIt(false);
 						if (nodeIt.hasNext()) {
 							current = nodeIt;
 							return;
@@ -724,6 +788,65 @@ final static class BitmapIndexedNode implements INode{
 			throw new UnsupportedOperationException();			
 		}		
 		
+	}
+	
+	static final class ReverseBitmapIndexedNodeIterator implements Iterator {
+		BitmapIndexedNode node;
+		
+		int index;
+		Iterator current;
+		public ReverseBitmapIndexedNodeIterator(BitmapIndexedNode node) {
+			this.node = node;
+			index = node.array.length-1;
+			moveCurIfNeeded();
+		}
+
+		public boolean hasNext() {
+			moveCurIfNeeded();
+			if (current == null && index < 0) {
+				return false;
+			}
+			return true;
+		}
+		//current != null => current.hasNext or index points to a valid key
+		private void moveCurIfNeeded() {
+			if (current != null && current.hasNext()) return;
+			current = null;
+			while (index >= 0) {
+				Object valOrNode = node.array[index];
+				Object keyOrNull = node.array[index-1];
+				if (keyOrNull == null) {
+					index -= 2;
+					INode val = ((INode) valOrNode);
+					if (val != null) {
+						Iterator nodeIt  = val.nodeIt(true);
+						if (nodeIt.hasNext()) {
+							current = nodeIt;
+							return;
+						}
+					} 
+				} else {
+					return;
+				}
+			} 
+		}
+
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();			
+		}		
+		@Override
+		public Object next() {
+			if (current != null) {
+				return current.next();
+			} else {
+				Object valOrNode = node.array[index--];
+				Object keyOrNull = node.array[index--];
+				return new MapEntry(keyOrNull, valOrNode);
+			}
+				
+		}
 	}
 	
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
@@ -998,12 +1121,37 @@ final static class HashCollisionNode implements INode{
 		}
 		
 	}
+	static final class ReverseHashCollisionNodeIterator implements Iterator {
+		Object[] array;
+		int index;
+		int count;
+		public ReverseHashCollisionNodeIterator(HashCollisionNode node) {
+			this.array = node.array;
+			this.count = node.count;
+			this.index = count*2 - 1;
+		}
+		public boolean hasNext() {
+			 return index >= 0;
+		}
+		
+		public Object next() {
+			Object v = array[index--];
+			Object k = array[index--];
+			return new MapEntry(k, v);
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();			
+		}
+		
+	}
 	
 	public Iterator nodeItFrom(int shift, int hash, Object key) {
 		return new HashCollisionNodeIterator(this,shift,hash,key);
 	}
-	public Iterator nodeIt() {
-		return new HashCollisionNodeIterator(this);
+	public Iterator nodeIt(boolean reverse) {
+		return reverse?new ReverseHashCollisionNodeIterator(this) : new HashCollisionNodeIterator(this);
 	}
 
 	
