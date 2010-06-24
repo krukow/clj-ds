@@ -85,11 +85,10 @@ public class PersistentHashMapTest {
 		
 		assertEquals(20, l.size());
 		
-		PersistentHashMap<Integer, Integer> hm = (PersistentHashMap<Integer, Integer>) genMap;
 		
 		int index = 10;
 		int count = 0;
-		for (Iterator<Map.Entry<Integer, Integer>> iterator = hm.iteratorFrom(l.get(index)); iterator.hasNext();) {
+		for (Iterator<Map.Entry<Integer, Integer>> iterator = genMap.iteratorFrom(l.get(index)); iterator.hasNext();) {
 			Entry<Integer, Integer> next = iterator.next();
 			assertEquals(l.get(index), next.getKey());
 			index++;
