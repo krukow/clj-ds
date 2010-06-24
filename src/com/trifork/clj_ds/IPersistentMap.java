@@ -10,6 +10,7 @@
 
 package com.trifork.clj_ds;
 
+import java.util.Iterator;
 import java.util.Map;
 
 
@@ -21,5 +22,9 @@ IPersistentMap<K,V> assoc(K key, V val);
 IPersistentMap<K,V> assocEx(K key, V val) throws Exception;
 
 IPersistentMap<K,V> without(K key) throws Exception;
+
+Iterator<Map.Entry<K, V>> iteratorFrom(K key);
+
+Iterator<Map.Entry<K, V>> reverseIterator();
 
 }

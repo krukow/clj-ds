@@ -210,6 +210,15 @@ public Iterator<Map.Entry<K, V>> iterator(){
 	return new Iter(array);
 }
 
+public Iterator<Map.Entry<K, V>> reverseIterator(){
+	return new RevIter(array);
+}
+
+public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
+	int i = indexOf(key);
+	return new Iter(array,i);
+}
+
 public ISeq seq(){
 	if(array.length > 0)
 		return new Seq(array, 0);
@@ -283,6 +292,37 @@ static class Iter implements Iterator{
 	}
 
 }
+
+static class RevIter implements Iterator{
+	Object[] array;
+	int i;
+
+	//for iterator
+	RevIter(Object[] array){
+		this(array, array.length);
+	}
+
+	//for entryAt
+	RevIter(Object[] array, int i){
+		this.array = array;
+		this.i = i;
+	}
+
+	public boolean hasNext(){
+		return i > 0;
+	}
+
+	public Object next(){
+		i -= 2;
+		return new MapEntry(array[i],array[i+1]);
+	}
+
+	public void remove(){
+		throw new UnsupportedOperationException();
+	}
+
+}
+
 
 public ITransientMap asTransient(){
 	return new TransientArrayMap(array);

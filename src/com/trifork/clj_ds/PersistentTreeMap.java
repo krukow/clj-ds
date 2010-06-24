@@ -207,6 +207,10 @@ public NodeIterator iterator(){
 	return new NodeIterator(tree, true);
 }
 
+public Iterator<Map.Entry<K, V>> iteratorFrom(K key) {
+	return new SeqIterator<Map.Entry<K, V>>(seqFrom(key, true));
+}
+
 public NodeIterator reverseIterator(){
 	return new NodeIterator(tree, false);
 }

@@ -213,6 +213,59 @@ public Iterator<Map.Entry<K, V>> iterator(){
 	};
 }
 
+public Iterator<Map.Entry<K, V>> reverseIterator(){
+	return new Iterator<Map.Entry<K, V>>() {
+		
+		Iterator<Map.Entry<K, V>> mapIter = ext.reverseIterator();
+		Object[] keys = RT.seqToArray(def.keys);
+		int index = keys.length;
+		
+		public boolean hasNext() {
+			return mapIter.hasNext() || index > 0;
+		}
+
+		public java.util.Map.Entry<K, V> next() {
+			if (mapIter.hasNext()) {
+				return mapIter.next();
+			}
+			index -= 1;
+			return new MapEntry(keys[index],vals[index]);
+		}
+
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}		
+	};
+}
+
+public Iterator<java.util.Map.Entry<K, V>> iteratorFrom(K key) {
+	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
+	if(e != null) {	
+		final int start = e.getValue();
+		return new Iterator<java.util.Map.Entry<K, V>>() {
+			int index = start;
+			final Object[] keys = RT.seqToArray(def.keys);
+			Iterator<Map.Entry<K, V>> extIt = ext.iterator();
+			
+			public boolean hasNext() {
+				return index < vals.length || extIt.hasNext();
+			}
+
+			public java.util.Map.Entry<K, V> next() {
+				if (index < vals.length) {
+					return new MapEntry(keys[index], vals[index++]);
+				}
+				return extIt.next();
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	} else {
+		return ext.iteratorFrom(key);
+	}
+}
 
 public int count(){
 	return vals.length + RT.count(ext);
@@ -257,4 +310,5 @@ static class Seq extends ASeq{
 		return ext.seq();
 	}
 }
+
 }
