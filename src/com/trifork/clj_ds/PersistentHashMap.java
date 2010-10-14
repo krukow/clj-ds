@@ -385,11 +385,6 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 
 }
 
-static interface Position {
-	INode getINode();
-	int getIndex();
-}
-
 static interface INode extends Serializable {
 	INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
 

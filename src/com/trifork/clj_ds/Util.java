@@ -14,6 +14,8 @@ package com.trifork.clj_ds;
 
 import java.math.BigInteger;
 
+import com.trifork.clj_ds.PersistentVector.Node;
+
 public class Util{
 static public boolean equiv(Object k1, Object k2){
 	if(k1 == k2)
@@ -83,6 +85,12 @@ static public boolean isInteger(Object x){
 
 static public Object ret1(Object ret, Object nil){
 		return ret;
+}
+static public Node ret1(Node ret, Object nil){
+	return ret;
+}
+static public Object[] ret1(Object[] ret, Object nil){
+	return ret;
 }
 
 static public ISeq ret1(ISeq ret, Object nil){

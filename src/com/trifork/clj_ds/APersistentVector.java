@@ -572,5 +572,6 @@ static class SubVector<T> extends APersistentVector<T> implements IObj{
 	public IPersistentMap meta(){
 		return _meta;
 	}
+	
 }
 }

@@ -16,7 +16,11 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+
+import jsr166y.ForkJoinPool;
+import jsr166y.RecursiveTask;
 
 public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>{
 
@@ -93,6 +97,15 @@ PersistentVector(IPersistentMap meta, int cnt, int shift, Node root, Object[] ta
 	this.root = root;
 	this.tail = tail;
 }
+
+public PersistentVector(IPersistentMap meta, int cnt, int shift, Node root, Object[] tail, IFn f) {
+	this._meta = meta();
+	this.cnt = cnt;
+	this.shift = shift;
+	this.tail = mapArray(f,Util.ret1(tail,tail=null));
+	this.root = mapNode(f,Util.ret1(root, root=null), this.shift);
+}
+
 
 public TransientVector<T> asTransient(){
 	return new TransientVector<T>(this);
@@ -851,4 +864,85 @@ static public void main(String[] args){
 
 }
 //  */
+
+public static IPersistentVector vectormap(IFn f, PersistentVector v) {
+	return new PersistentVector(v._meta,v.cnt,v.shift,v.root,Util.ret1(v.tail,v=null),f);
+}
+static final ForkJoinPool mainPool = new ForkJoinPool();
+
+public static IPersistentVector pvectormap(IFn f, PersistentVector v) {
+	Node invoke = mainPool.invoke(new PMapTask(f, v.shift,v.root));
+	return new PersistentVector(v._meta,v.cnt,v.shift,invoke, mapArray(f,v.tail));
+}
+
+static final class PMapTask extends RecursiveTask<Node> {
+   
+	private IFn f;
+	private int shift;
+	private Node node;
+
+	public PMapTask(IFn f, int shift, Node node) {
+		this.f = f;
+		this.shift = shift;
+		this.node = node;
+	}
+   
+	public Node compute() {
+		if (node == null) {
+			return null;
+		}
+	   if (this.shift <= 5) {
+		   return mapNode(f,node,shift);
+	   }
+
+	   PMapTask[] tasks = new PMapTask[node.array.length];
+	   shift -= 5;
+	   for (int i=0;i<tasks.length;i++) {
+		   tasks[i] = new PMapTask(f,shift,(Node) node.array[i]);
+	   }
+	   invokeAll(tasks);
+	   Node[] nodes = new Node[node.array.length];
+	   try {
+		   for (int i=0;i<tasks.length;i++) {  
+				nodes[i] = tasks[i].get();
+		   }
+		   return new Node(null,nodes);
+	   } catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
+		}
+   }
+}	
+
+private static Object[] mapArray(IFn f, Object[] arr) {
+	Object[] res = new Object[arr.length];
+	System.arraycopy(arr, 0, res, 0, arr.length);
+	arr = null;
+	try {
+		for(int i=0;i<res.length;i++) {	
+				res[i] = f.invoke(res[i]);
+		}
+		return res;
+	} catch (Exception e) {
+		throw new RuntimeException(e);
+	}
+}
+
+private static Node mapNode(IFn f, Node node, int level) {
+	if (node == null) {return null;}
+	if (level == 0) {
+		return new Node(null,mapArray(f, Util.ret1(node.array, node=null)));
+	}
+	Object[] newArr = new Object[node.array.length];
+	System.arraycopy(node.array, 0, newArr, 0, node.array.length);
+	node=null;
+	level -= 5;
+	for (int i=0;i<newArr.length;i++) {
+		newArr[i] = mapNode(f,Util.ret1((Node) newArr[i], newArr[i]=null),level);
+	}
+	return new Node(null,newArr);
+}
+
 }

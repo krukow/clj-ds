@@ -150,7 +150,7 @@ public class PersistentHashMapTest {
 	 */
 	@Test
 	public final void testIterator() {
-		PersistentHashMap<Integer, Integer> dsMap = PersistentHashMap.emptyMap();
+		IPersistentMap<Integer, Integer> dsMap = PersistentHashMap.emptyMap();
 		HashSet<Integer> hs = null;
 		for (int i = 0; i < 33000; i++) {
 			hs = new HashSet<Integer>();
@@ -160,7 +160,7 @@ public class PersistentHashMapTest {
 			}
 			assertEquals(i, hs.size());
 			Integer o = new Integer(i);
-			dsMap = (PersistentHashMap<Integer, Integer>) dsMap.assoc(o, o);
+			dsMap = dsMap.assoc(o, o);
 		}
 		
 	}
