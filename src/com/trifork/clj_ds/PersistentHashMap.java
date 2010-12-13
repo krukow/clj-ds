@@ -234,26 +234,6 @@ public Iterator<Map.Entry<K, V>> reverseIterator(){
 }
 
 
-public static final class EmptyIterator implements Iterator {
-
-	@Override
-	public boolean hasNext() {
-		return false;
-	}
-
-	@Override
-	public Object next() {
-		throw new IllegalStateException();
-	}
-
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException();
-	}
-	
-}
-
-
 public int count(){
 	return count;
 }
