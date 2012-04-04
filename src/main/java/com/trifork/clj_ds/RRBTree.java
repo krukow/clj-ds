@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings({ "rawtypes", "serial" })
-public class RRBTree<T> extends APersistentVector<T> {
-
+public abstract class RRBTree<T> extends APersistentVector<T> {
+    /*
 	static class Node implements Serializable {
 		transient final AtomicReference<Thread> edit;
 		final int[] ranges;
@@ -43,28 +43,28 @@ public class RRBTree<T> extends APersistentVector<T> {
 		this.root = root;
 		this.tail = tail;
 	}
-	
-	//put node's child where i is located in box 
+
+	//put node's child where i is located in box
 	//return the index of 'i' relative to the found child
-	private static final int findNode(Node node, int i, int level, Box box) {		
+	private static final int findNode(Node node, int i, int level, Box box) {
 		int subidx = (i >>> level) & 0x01f;
 		int leftCount = 0;
 		if (node.ranges == null) {
-			leftCount = subidx * (int) Math.pow(32, level / 5);//optimization possible						
+			leftCount = subidx * (int) Math.pow(32, level / 5);//optimization possible
 		} else {
-			leftCount = node.ranges[subidx];	
+			leftCount = node.ranges[subidx];
 			while (i >= leftCount) {
 				subidx++;
 				leftCount = node.ranges[subidx];
-			}								
+			}
 		}
-		i -= leftCount;		
+		i -= leftCount;
 		if (subidx < node.array.length) {
-			box.val = node.array[subidx];	
+			box.val = node.array[subidx];
 		} else {
 			box.val = null;
 		}
-		
+
 		return i;
 	}
 
@@ -84,8 +84,8 @@ public class RRBTree<T> extends APersistentVector<T> {
 
 	public RRBTree<T> assocN(int i, T val) {
 		if (i >= 0 && i < cnt) {
-			return new RRBTree<T>(cnt, shift, 
-								  doAssoc(new Box(null), shift, root, i, val), 
+			return new RRBTree<T>(cnt, shift,
+								  doAssoc(new Box(null), shift, root, i, val),
 								  tail);
 		}
 		if (i == cnt)
@@ -115,8 +115,8 @@ public class RRBTree<T> extends APersistentVector<T> {
 		if (level == 0) {
 			ret.array[i] = val;
 		} else {
-			int subidx = (i >>> level) & 0x01f;			
-			i = findNode(parent, i, level, box);									
+			int subidx = (i >>> level) & 0x01f;
+			i = findNode(parent, i, level, box);
 			ret.array[subidx] = doAssoc(box, level - 5, (Node) box.val, i, val);
 		}
 		return ret;
@@ -126,14 +126,14 @@ public class RRBTree<T> extends APersistentVector<T> {
 		//note there are optimizations possible here
 		Node ret = doCons(new Box(null), root, shift, cnt-1, val);
 		// overflow root?
-		if (ret == null) {//optimization: this could be cached.			
+		if (ret == null) {//optimization: this could be cached.
 			Object[] rootChildren = new Object[2];
-					
+
 			int newshift = shift + 5;
 			rootChildren[0] = root;
 			Node tailnode = new Node(root.edit, new Object[] {val});
 			rootChildren[1] = newPath(root.edit, shift, tailnode);
-			Node newroot = new Node(root.edit, rootChildren, 
+			Node newroot = new Node(root.edit, rootChildren,
 	                root.ranges == null ? null : new int[] { cnt });
 
 			return new RRBTree<T>(cnt + 1, newshift, newroot, tail);
@@ -145,7 +145,7 @@ public class RRBTree<T> extends APersistentVector<T> {
 			Node node) {
 		if (level == 0)
 			return node;
-		return new Node(edit, new Object[]{ newPath(edit, level - 5, node) });				
+		return new Node(edit, new Object[]{ newPath(edit, level - 5, node) });
 	}
 
 	protected Node doCons(Box box, Node node, int level, int i, T val) {
@@ -161,7 +161,7 @@ public class RRBTree<T> extends APersistentVector<T> {
 		} else {
 			// warning code dup ahead
 			int subidx = (i >>> level) & 0x01f;
-			subidx += findDiff(node, i, subidx);						
+			subidx += findDiff(node, i, subidx);
 			i = findNode(node, i, level, box);
 
 			Node ret = doCons(box, (Node)box.val, level - 5, i, val);
@@ -190,7 +190,7 @@ public class RRBTree<T> extends APersistentVector<T> {
 
 		}
 	}
-	
+
 	public IPersistentVector concatv(IPersistentVector other) {
 		if (other instanceof RRBTree) {
 			RRBTree t = (RRBTree) other;
@@ -209,27 +209,27 @@ public class RRBTree<T> extends APersistentVector<T> {
 				newroot = new Node(root.edit,newRoot);
 			} else {
 				Object[] rootChildren = new Object[2];
-				
+
 				int newshift = shift + 5;
 				rootChildren[0] = root;
 				Node tailnode = new Node(root.edit, new Object[] {val});
 				rootChildren[1] = newPath(root.edit, shift, tailnode);
-				Node newroot = new Node(root.edit, rootChildren, 
+				Node newroot = new Node(root.edit, rootChildren,
 		                root.ranges == null ? null : new int[] { cnt });
 
 				return new RRBTree<T>(cnt + 1, newshift, newroot, tail);
 			}
 			return new RRBTree(this.cnt+other.count(),this.shift,left,tail);
-			
-			
+
+
 		}
 		throw new IllegalArgumentException();
-		
+
 	}
-	
+
 	protected static RRBTree concatv(Node lroot, int lcnt, int llevel, Node rroot, int rcnt, int rlevel) {
-		
-		
+
+
 		//move to bottom
 		Node node = lroot;
 		Box box = new Box(null);
@@ -238,18 +238,18 @@ public class RRBTree<T> extends APersistentVector<T> {
 			i = findNode(node, i, level, box);
 			node = (Node) box.val;
 		}
-		
+
 		Node rnode = rroot;
-		box = new Box(null);		
+		box = new Box(null);
 		for (int level = rlevel; level > 0; level -= 5) {
 			findNode(rnode, 0, level, box);
 			rnode = (Node) box.val;
 		}
-				
-		
-		
+
+
+
 		return r;
-			
+
 	}
 
 	@Override
@@ -270,13 +270,14 @@ public class RRBTree<T> extends APersistentVector<T> {
 	public static void main(String[] args) {
 		RRBTree<Integer> t = RRBTree.EMPTY;
 		for (int i=0;i<33;i++) {t = t.cons(i);}
-		
+
 		RRBTree<Integer> s = RRBTree.EMPTY;
 		for (int i=0;i<33;i++) {s = s.cons(-i);}
-		
+
 		System.out.println(t.concatv(s));
-		
-		
+
+
 		System.out.println(t);
 	}
+    */
 }
