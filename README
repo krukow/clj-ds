@@ -10,6 +10,16 @@ language itself (EPL, see file epl-v10.html).
 
 It has been modified by Karl Krukow <karl.krukow@gmail.com>, and mistakes introduced are mine.
 
+
+Maven
+
+<dependency>
+  <groupId>com.github.krukow</groupId>
+  <artifactId>clj-ds</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+
 *WHY*
 First, I love Clojure :) ... 
 Unfortunately sometimes clients require that I use Java...
