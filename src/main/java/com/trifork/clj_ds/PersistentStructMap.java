@@ -146,7 +146,7 @@ public IMapEntry<K,V> entryAt(K key){
 	return ext.entryAt(key);
 }
 
-public IPersistentMap<K,V> assoc(K key, V val){
+public PersistentStructMap<K,V> assoc(K key, V val){
 	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
 	if(e != null)
 		{
@@ -176,13 +176,13 @@ public V valAt(K key, V notFound){
 	return ext.valAt(key, notFound);
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
+public PersistentStructMap<K,V> assocEx(K key, V val) throws Exception{
 	if(containsKey(key))
 		throw new Exception("Key already present");
 	return assoc(key, val);
 }
 
-public IPersistentMap<K,V> without(K key) throws Exception{
+public PersistentStructMap<K,V> without(K key) throws Exception{
 	Map.Entry e = def.keyslots.entryAt(key);
 	if(e != null)
 		throw new Exception("Can't remove struct key");

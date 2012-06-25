@@ -115,7 +115,7 @@ public IMapEntry<K,V> entryAt(K key){
 	return (root != null) ? root.find(0, Util.hash(key), key) : null;
 }
 
-public IPersistentMap<K,V> assoc(K key, V val){
+public PersistentHashMap<K,V> assoc(K key, V val){
 	if(key == null) {
 		if(hasNull && val == nullValue)
 			return this;
@@ -139,13 +139,13 @@ public V valAt(K key){
 	return valAt(key, null);
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
+public PersistentHashMap<K,V> assocEx(K key, V val) throws Exception{
 	if(containsKey(key))
 		throw new Exception("Key already present");
 	return assoc(key, val);
 }
 
-public IPersistentMap<K,V> without(K key){
+public PersistentHashMap<K,V> without(K key){
 	if(key == null)
 		return hasNull ? new PersistentHashMap<K,V>(meta(), count - 1, root, false, null) : this;
 	if(root == null)
@@ -329,7 +329,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 		return this;
 	}
 
-	IPersistentMap<K,V> doPersistent() {
+	PersistentHashMap<K,V> doPersistent() {
 		edit.set(null);
 		return new PersistentHashMap<K,V>(count, root, hasNull, nullValue);
 	}
