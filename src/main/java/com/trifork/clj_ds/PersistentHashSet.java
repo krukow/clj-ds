@@ -109,26 +109,26 @@ public Iterator<T> iterator(){
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
-		} 
-		
+		}
+
 	};
 }
 
 
-public IPersistentSet<T> disjoin(T key) throws Exception{
+public PersistentHashSet<T> disjoin(T key) throws Exception{
 	if(contains(key))
 		return new PersistentHashSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet<T> cons(T o){
+public PersistentHashSet<T> cons(T o){
 	if(contains(o))
 		return this;
 	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection<T> empty(){
-	return EMPTY.withMeta(meta());	
+public PersistentHashSet<T> empty(){
+	return EMPTY.withMeta(meta());
 }
 
 public PersistentHashSet<T> withMeta(IPersistentMap meta){
