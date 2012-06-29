@@ -176,16 +176,16 @@ public V valAt(K key, V notFound){
 	return ext.valAt(key, notFound);
 }
 
-public PersistentStructMap<K,V> assocEx(K key, V val) throws Exception{
+public PersistentStructMap<K,V> assocEx(K key, V val) {
 	if(containsKey(key))
-		throw new Exception("Key already present");
+		throw new RuntimeException("Key already present");
 	return assoc(key, val);
 }
 
-public PersistentStructMap<K,V> without(K key) throws Exception{
+public PersistentStructMap<K,V> without(K key) {
 	Map.Entry e = def.keyslots.entryAt(key);
 	if(e != null)
-		throw new Exception("Can't remove struct key");
+		throw new RuntimeException("Can't remove struct key");
 	IPersistentMap<K,V> newExt = ext.without(key);
 	if(newExt == ext)
 		return this;
@@ -194,7 +194,7 @@ public PersistentStructMap<K,V> without(K key) throws Exception{
 
 public Iterator<Map.Entry<K, V>> iterator(){
 	return new Iterator<Map.Entry<K, V>>() {
-		
+
 		ISeq<IMapEntry<K, V>> seq = seq();
 
 		public boolean hasNext() {
@@ -209,17 +209,17 @@ public Iterator<Map.Entry<K, V>> iterator(){
 
 		public void remove() {
 			throw new UnsupportedOperationException();
-		}		
+		}
 	};
 }
 
 public Iterator<Map.Entry<K, V>> reverseIterator(){
 	return new Iterator<Map.Entry<K, V>>() {
-		
+
 		Iterator<Map.Entry<K, V>> mapIter = ext.reverseIterator();
 		Object[] keys = RT.seqToArray(def.keys);
 		int index = keys.length;
-		
+
 		public boolean hasNext() {
 			return mapIter.hasNext() || index > 0;
 		}
@@ -234,19 +234,19 @@ public Iterator<Map.Entry<K, V>> reverseIterator(){
 
 		public void remove() {
 			throw new UnsupportedOperationException();
-		}		
+		}
 	};
 }
 
 public Iterator<java.util.Map.Entry<K, V>> iteratorFrom(K key) {
 	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
-	if(e != null) {	
+	if(e != null) {
 		final int start = e.getValue();
 		return new Iterator<java.util.Map.Entry<K, V>>() {
 			int index = start;
 			final Object[] keys = RT.seqToArray(def.keys);
 			Iterator<Map.Entry<K, V>> extIt = ext.iterator();
-			
+
 			public boolean hasNext() {
 				return index < vals.length || extIt.hasNext();
 			}

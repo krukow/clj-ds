@@ -99,12 +99,12 @@ public Object entryKey(Object entry){
 	return ((IMapEntry) entry).key();
 }
 
-public PersistentTreeMap<K,V> assocEx(K key, V val) throws Exception{
+public PersistentTreeMap<K,V> assocEx(K key, V val) {
 	Box found = new Box(null);
 	Node t = add(tree, key, val, found);
 	if(t == null)   //null == already contains key
 		{
-		throw new Exception("Key already present");
+		throw new RuntimeException("Key already present");
 		}
 	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1, meta());
 }
@@ -143,7 +143,7 @@ public ISeq seq(){
 }
 
 public IPersistentCollection empty(){
-	return new PersistentTreeMap(meta(), comp);	
+	return new PersistentTreeMap(meta(), comp);
 }
 
 public ISeq rseq() throws Exception{

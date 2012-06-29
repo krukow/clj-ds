@@ -122,7 +122,7 @@ public PersistentHashMap<K,V> assoc(K key, V val){
 		return new PersistentHashMap<K,V>(meta(), hasNull ? count : count + 1, root, true, val);
 	}
 	Box addedLeaf = new Box(null);
-	INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root) 
+	INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root)
 			.assoc(0, Util.hash(key), key, val, addedLeaf);
 	if(newroot == root)
 		return this;
@@ -139,9 +139,9 @@ public V valAt(K key){
 	return valAt(key, null);
 }
 
-public PersistentHashMap<K,V> assocEx(K key, V val) throws Exception{
+public PersistentHashMap<K,V> assocEx(K key, V val) {
 	if(containsKey(key))
-		throw new Exception("Key already present");
+		throw new RuntimeException("Key already present");
 	return assoc(key, val);
 }
 
@@ -153,7 +153,7 @@ public PersistentHashMap<K,V> without(K key){
 	INode newroot = root.without(0, Util.hash(key), key);
 	if(newroot == root)
 		return this;
-	return new PersistentHashMap<K,V>(meta(), count - 1, newroot, hasNull, nullValue); 
+	return new PersistentHashMap<K,V>(meta(), count - 1, newroot, hasNull, nullValue);
 }
 
 public Iterator<Map.Entry<K, V>> iterator2(){
@@ -179,7 +179,7 @@ public Iterator<Map.Entry<K, V>> iterator2(){
 }
 
 public Iterator<Map.Entry<K, V>> iterator(){
-	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator(); 
+	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
 	return hasNull ? new Iterator<Map.Entry<K, V>>(){
 		Iterator<Map.Entry<K, V>> i = s;
 		boolean nullReady = true;
@@ -200,12 +200,12 @@ public Iterator<Map.Entry<K, V>> iterator(){
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 	} : s;
 }
 
 public Iterator<Map.Entry<K, V>> reverseIterator(){
-	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(true) : new EmptyIterator(); 
+	final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(true) : new EmptyIterator();
 	return hasNull ? new Iterator<Map.Entry<K, V>>(){
 		Iterator<Map.Entry<K, V>> i = s;
 		boolean nullReady = true;
@@ -222,14 +222,14 @@ public Iterator<Map.Entry<K, V>> reverseIterator(){
 				return new MapEntry<K,V>(null, PersistentHashMap.this.nullValue);
 			}
 			throw new IllegalStateException();
-			
+
 		}
 
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 	} : s;
 }
 
@@ -239,18 +239,18 @@ public int count(){
 }
 
 public ISeq<IMapEntry<K, V>> seq(){
-	ISeq<IMapEntry<K, V>> s = root != null ? root.nodeSeq() : null; 
+	ISeq<IMapEntry<K, V>> s = root != null ? root.nodeSeq() : null;
 	return hasNull ? new Cons<IMapEntry<K, V>>(new MapEntry<K,V>(null, nullValue), s) : s;
 }
 
 public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
 	if (hasNull) {throw new UnsupportedOperationException("not supported for maps with null entries yet");}
-	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, Util.hash(key), key) : new EmptyIterator(); 
+	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, Util.hash(key), key) : new EmptyIterator();
 	return s;
 }
 
 public IPersistentCollection empty(){
-	return EMPTY.withMeta(meta());	
+	return EMPTY.withMeta(meta());
 }
 
 static int mask(int hash, int shift){
@@ -282,11 +282,11 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 	TransientHashMap(PersistentHashMap<K,V> m) {
 		this(new AtomicReference<Thread>(Thread.currentThread()), m.root, m.count, m.hasNull, m.nullValue);
 	}
-	
+
 	TransientHashMap(AtomicReference<Thread> edit, INode root, int count, boolean hasNull, V nullValue) {
 		this.edit = edit;
-		this.root = root; 
-		this.count = count; 
+		this.root = root;
+		this.count = count;
 		this.hasNull = hasNull;
 		this.nullValue = nullValue;
 	}
@@ -306,7 +306,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 		INode n = (root == null ? BitmapIndexedNode.EMPTY : root)
 			.assoc(edit, 0, Util.hash(key), key, val, leafFlag);
 		if (n != this.root)
-			this.root = n; 
+			this.root = n;
 		if(leafFlag.val != null) this.count++;
 		return this;
 	}
@@ -348,7 +348,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 	int doCount() {
 		return count;
 	}
-	
+
 	void ensureEditable(){
 		Thread owner = edit.get();
 		if(owner == Thread.currentThread())
@@ -369,7 +369,7 @@ static interface INode extends Serializable {
 	INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
 
 	Iterator nodeIt(boolean reverse);
-	
+
 	Iterator nodeItFrom(int shift, int hash, Object key);
 
 	INode without(int shift, int hash, Object key);
@@ -395,11 +395,11 @@ final static class ArrayNode implements INode{
 		this.edit = edit;
 		this.count = count;
 	}
-	
+
 	public Iterator nodeItFrom(int shift, int hash, Object key) {
 		return new ArrayNodeIterator(this, shift, hash, key);
 	}
-	
+
 	static class ArrayNodeIterator implements Iterator {
 		int index;
 		Iterator current;
@@ -412,12 +412,12 @@ final static class ArrayNode implements INode{
 		}
 		public ArrayNodeIterator(ArrayNode an, int shift, int hash, Object key) {
 			array = an.array;
-			this.shift = shift; 
+			this.shift = shift;
 			this.hash = hash;
 			this.key = key;
 			moveCurTo();
 		}
-		
+
 		private void moveCurTo() {
 			index = mask(hash, shift);
 			INode node = array[index];
@@ -425,20 +425,20 @@ final static class ArrayNode implements INode{
 				return;
 			current = node.nodeItFrom(shift + 5, hash, key);
 			index += 1;
-			
+
 		}
-		
+
 		public boolean hasNext() {
 			while (current != null && !current.hasNext()) {
 				moveCurIfNeeded();
 			}
-			return current != null && current.hasNext(); 
+			return current != null && current.hasNext();
 		}
 
 		private void moveCurIfNeeded() {
 			if (current != null && current.hasNext()) return;
 			while (index < array.length && array[index] == null) {index += 1;};
-			current = (index == array.length) ? null : array[index++].nodeIt(false); 
+			current = (index == array.length) ? null : array[index++].nodeIt(false);
 		}
 
 		@Override
@@ -448,9 +448,9 @@ final static class ArrayNode implements INode{
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException();			
+			throw new UnsupportedOperationException();
 		}
-		
+
 	}
 	static final class ReverseArrayNodeIterator implements Iterator {
 		int index;
@@ -466,13 +466,13 @@ final static class ArrayNode implements INode{
 		private void moveCurIfNeeded() {
 			if (current != null && current.hasNext()) return;
 			while (index >= 0 && array[index] == null) {index -= 1;};
-			current = (index < 0) ? null : array[index--].nodeIt(true); 
+			current = (index < 0) ? null : array[index--].nodeIt(true);
 		}
 		public boolean hasNext() {
 			while (current != null && !current.hasNext()) {
 				moveCurIfNeeded();
 			}
-			return current != null && current.hasNext(); 
+			return current != null && current.hasNext();
 		}
 
 
@@ -483,10 +483,10 @@ final static class ArrayNode implements INode{
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException();			
+			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	public Iterator nodeIt(boolean reverse) {
 		return reverse?new ReverseArrayNodeIterator(this): new ArrayNodeIterator(this);
 	}
@@ -495,7 +495,7 @@ final static class ArrayNode implements INode{
 		int idx = mask(hash, shift);
 		INode node = array[idx];
 		if(node == null)
-			return new ArrayNode(null, count + 1, cloneAndSet(array, idx, BitmapIndexedNode.EMPTY.assoc(shift + 5, hash, key, val, addedLeaf)));			
+			return new ArrayNode(null, count + 1, cloneAndSet(array, idx, BitmapIndexedNode.EMPTY.assoc(shift + 5, hash, key, val, addedLeaf)));
 		INode n = node.assoc(shift + 5, hash, key, val, addedLeaf);
 		if(n == node)
 			return this;
@@ -514,7 +514,7 @@ final static class ArrayNode implements INode{
 			if (count <= 8) // shrink
 				return pack(null, idx);
 			return new ArrayNode(null, count - 1, cloneAndSet(array, idx, n));
-		} else 
+		} else
 			return new ArrayNode(null, count, cloneAndSet(array, idx, n));
 	}
 
@@ -523,7 +523,7 @@ final static class ArrayNode implements INode{
 		INode node = array[idx];
 		if(node == null)
 			return null;
-		return node.find(shift + 5, hash, key); 
+		return node.find(shift + 5, hash, key);
 	}
 
 	public Object find(int shift, int hash, Object key, Object notFound){
@@ -531,9 +531,9 @@ final static class ArrayNode implements INode{
 		INode node = array[idx];
 		if(node == null)
 			return notFound;
-		return node.find(shift + 5, hash, key, notFound); 
+		return node.find(shift + 5, hash, key, notFound);
 	}
-	
+
 	public ISeq nodeSeq(){
 		return Seq.create(array);
 	}
@@ -543,7 +543,7 @@ final static class ArrayNode implements INode{
 			return this;
 		return new ArrayNode(edit, count, this.array.clone());
 	}
-	
+
 	private ArrayNode editAndSet(AtomicReference<Thread> edit, int i, INode n){
 		ArrayNode editable = ensureEditable(edit);
 		editable.array[i] = n;
@@ -576,13 +576,13 @@ final static class ArrayNode implements INode{
 		if(node == null) {
 			ArrayNode editable = editAndSet(edit, idx, BitmapIndexedNode.EMPTY.assoc(edit, shift + 5, hash, key, val, addedLeaf));
 			editable.count++;
-			return editable;			
+			return editable;
 		}
 		INode n = node.assoc(edit, shift + 5, hash, key, val, addedLeaf);
 		if(n == node)
 			return this;
 		return editAndSet(edit, idx, n);
-	}	
+	}
 
 	public INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf){
 		int idx = mask(hash, shift);
@@ -601,16 +601,16 @@ final static class ArrayNode implements INode{
 		}
 		return editAndSet(edit, idx, n);
 	}
-	
+
 	static class Seq extends ASeq {
 		final INode[] nodes;
 		final int i;
-		final ISeq s; 
-		
+		final ISeq s;
+
 		static ISeq create(INode[] nodes) {
 			return create(null, nodes, 0, null);
 		}
-		
+
 		private static ISeq create(IPersistentMap meta, INode[] nodes, int i, ISeq s) {
 			if (s != null)
 				return new Seq(meta, nodes, i, s);
@@ -622,7 +622,7 @@ final static class ArrayNode implements INode{
 				}
 			return null;
 		}
-		
+
 		private Seq(IPersistentMap meta, INode[] nodes, int i, ISeq s) {
 			super(meta);
 			this.nodes = nodes;
@@ -641,16 +641,16 @@ final static class ArrayNode implements INode{
 		public ISeq next() {
 			return create(null, nodes, i, s.next());
 		}
-		
+
 	}
 
-	
-	
+
+
 }
 
 final static class BitmapIndexedNode implements INode{
 	static final BitmapIndexedNode EMPTY = new BitmapIndexedNode(null, 0, new Object[0]);
-	
+
 	int bitmap;
 	Object[] array;
 	final AtomicReference<Thread> edit;
@@ -664,17 +664,17 @@ final static class BitmapIndexedNode implements INode{
 		this.array = array;
 		this.edit = edit;
 	}
-	
+
 	public Iterator nodeItFrom(int shift, int hash, Object key) {
 		return new BitmapIndexedNodeIterator(this, shift, hash, key);
 	}
 	public Iterator nodeIt(boolean reverse) {
 		return reverse? new ReverseBitmapIndexedNodeIterator(this) : new BitmapIndexedNodeIterator(this);
 	}
-	
+
 	static class BitmapIndexedNodeIterator implements Iterator{
 		BitmapIndexedNode node;
-		
+
 		int index;
 		int N;
 		Iterator current;
@@ -705,16 +705,16 @@ final static class BitmapIndexedNode implements INode{
 						current = nodeIt;
 						return;
 					}
-				} 
+				}
 			} else {
 				if(Util.equals(key, keyOrNull)) {
 					return;//OK index points to key
 				} else {
 					throw new IllegalArgumentException("Key not found: "+key);
 				}
-					
+
 			}
-				
+
 		}
 		public boolean hasNext() {
 			moveCurIfNeeded();
@@ -739,11 +739,11 @@ final static class BitmapIndexedNode implements INode{
 							current = nodeIt;
 							return;
 						}
-					} 
+					}
 				} else {
 					return;
 				}
-			} 
+			}
 		}
 
 		@Override
@@ -755,19 +755,19 @@ final static class BitmapIndexedNode implements INode{
 				Object valOrNode = node.array[index++];
 				return new MapEntry(keyOrNull, valOrNode);
 			}
-				
+
 		}
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException();			
-		}		
-		
+			throw new UnsupportedOperationException();
+		}
+
 	}
-	
+
 	static final class ReverseBitmapIndexedNodeIterator implements Iterator {
 		BitmapIndexedNode node;
-		
+
 		int index;
 		Iterator current;
 		public ReverseBitmapIndexedNodeIterator(BitmapIndexedNode node) {
@@ -799,18 +799,18 @@ final static class BitmapIndexedNode implements INode{
 							current = nodeIt;
 							return;
 						}
-					} 
+					}
 				} else {
 					return;
 				}
-			} 
+			}
 		}
 
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException();			
-		}		
+			throw new UnsupportedOperationException();
+		}
 		@Override
 		public Object next() {
 			if (current != null) {
@@ -820,10 +820,10 @@ final static class BitmapIndexedNode implements INode{
 				Object keyOrNull = node.array[index--];
 				return new MapEntry(keyOrNull, valOrNode);
 			}
-				
+
 		}
 	}
-	
+
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
 		int bit = bitpos(hash, shift);
 		int idx = index(bit);
@@ -835,23 +835,23 @@ final static class BitmapIndexedNode implements INode{
 				if(n == valOrNode)
 					return this;
 				return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2*idx+1, n));
-			} 
+			}
 			if(Util.equals(key, keyOrNull)) {
 				if(val == valOrNode)
 					return this;
 				return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2*idx+1, val));
-			} 
+			}
 			addedLeaf.val = addedLeaf;
-			return new BitmapIndexedNode(null, bitmap, 
-					cloneAndSet(array, 
-							2*idx, null, 
+			return new BitmapIndexedNode(null, bitmap,
+					cloneAndSet(array,
+							2*idx, null,
 							2*idx+1, createNode(shift + 5, keyOrNull, valOrNode, hash, key, val)));
 		} else {
 			int n = Integer.bitCount(bitmap);
 			if(n >= 16) {
 				INode[] nodes = new INode[32];
 				int jdx = mask(hash, shift);
-				nodes[jdx] = EMPTY.assoc(shift + 5, hash, key, val, addedLeaf);  
+				nodes[jdx] = EMPTY.assoc(shift + 5, hash, key, val, addedLeaf);
 				int j = 0;
 				for(int i = 0; i < 32; i++)
 					if(((bitmap >>> i) & 1) != 0) {
@@ -866,7 +866,7 @@ final static class BitmapIndexedNode implements INode{
 				Object[] newArray = new Object[2*(n+1)];
 				System.arraycopy(array, 0, newArray, 0, 2*idx);
 				newArray[2*idx] = key;
-				addedLeaf.val = addedLeaf; 
+				addedLeaf.val = addedLeaf;
 				newArray[2*idx+1] = val;
 				System.arraycopy(array, 2*idx, newArray, 2*(idx+1), 2*(n-idx));
 				return new BitmapIndexedNode(null, bitmap | bit, newArray);
@@ -887,7 +887,7 @@ final static class BitmapIndexedNode implements INode{
 				return this;
 			if (n != null)
 				return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2*idx+1, n));
-			if (bitmap == bit) 
+			if (bitmap == bit)
 				return null;
 			return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
 		}
@@ -896,7 +896,7 @@ final static class BitmapIndexedNode implements INode{
 			return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
 		return this;
 	}
-	
+
 	public IMapEntry find(int shift, int hash, Object key){
 		int bit = bitpos(hash, shift);
 		if((bitmap & bit) == 0)
@@ -937,7 +937,7 @@ final static class BitmapIndexedNode implements INode{
 		System.arraycopy(array, 0, newArray, 0, 2*n);
 		return new BitmapIndexedNode(edit, bitmap, newArray);
 	}
-	
+
 	private BitmapIndexedNode editAndSet(AtomicReference<Thread> edit, int i, Object a) {
 		BitmapIndexedNode editable = ensureEditable(edit);
 		editable.array[i] = a;
@@ -952,7 +952,7 @@ final static class BitmapIndexedNode implements INode{
 	}
 
 	private BitmapIndexedNode editAndRemovePair(AtomicReference<Thread> edit, int bit, int i) {
-		if (bitmap == bit) 
+		if (bitmap == bit)
 			return null;
 		BitmapIndexedNode editable = ensureEditable(edit);
 		editable.bitmap ^= bit;
@@ -973,15 +973,15 @@ final static class BitmapIndexedNode implements INode{
 				if(n == valOrNode)
 					return this;
 				return editAndSet(edit, 2*idx+1, n);
-			} 
+			}
 			if(Util.equals(key, keyOrNull)) {
 				if(val == valOrNode)
 					return this;
 				return editAndSet(edit, 2*idx+1, val);
-			} 
+			}
 			addedLeaf.val = addedLeaf;
-			return editAndSet(edit, 2*idx, null, 2*idx+1, 
-					createNode(edit, shift + 5, keyOrNull, valOrNode, hash, key, val)); 
+			return editAndSet(edit, 2*idx, null, 2*idx+1,
+					createNode(edit, shift + 5, keyOrNull, valOrNode, hash, key, val));
 		} else {
 			int n = Integer.bitCount(bitmap);
 			if(n*2 < array.length) {
@@ -996,7 +996,7 @@ final static class BitmapIndexedNode implements INode{
 			if(n >= 16) {
 				INode[] nodes = new INode[32];
 				int jdx = mask(hash, shift);
-				nodes[jdx] = EMPTY.assoc(edit, shift + 5, hash, key, val, addedLeaf);  
+				nodes[jdx] = EMPTY.assoc(edit, shift + 5, hash, key, val, addedLeaf);
 				int j = 0;
 				for(int i = 0; i < 32; i++)
 					if(((bitmap >>> i) & 1) != 0) {
@@ -1011,7 +1011,7 @@ final static class BitmapIndexedNode implements INode{
 				Object[] newArray = new Object[2*(n+4)];
 				System.arraycopy(array, 0, newArray, 0, 2*idx);
 				newArray[2*idx] = key;
-				addedLeaf.val = addedLeaf; 
+				addedLeaf.val = addedLeaf;
 				newArray[2*idx+1] = val;
 				System.arraycopy(array, 2*idx, newArray, 2*(idx+1), 2*(n-idx));
 				BitmapIndexedNode editable = ensureEditable(edit);
@@ -1034,16 +1034,16 @@ final static class BitmapIndexedNode implements INode{
 			if (n == valOrNode)
 				return this;
 			if (n != null)
-				return editAndSet(edit, 2*idx+1, n); 
-			if (bitmap == bit) 
+				return editAndSet(edit, 2*idx+1, n);
+			if (bitmap == bit)
 				return null;
 			removedLeaf.val = removedLeaf;
-			return editAndRemovePair(edit, bit, idx); 
+			return editAndRemovePair(edit, bit, idx);
 		}
 		if(Util.equals(key, keyOrNull)) {
 			removedLeaf.val = removedLeaf;
 			// TODO: collapse
-			return editAndRemovePair(edit, bit, idx); 			
+			return editAndRemovePair(edit, bit, idx);
 		}
 		return this;
 	}
@@ -1062,13 +1062,13 @@ final static class HashCollisionNode implements INode{
 		this.count = count;
 		this.array = array;
 	}
-	
+
 	static final class HashCollisionNodeIterator implements Iterator {
 		Object[] array;
 		int index;
 		int count;
 		public HashCollisionNodeIterator(HashCollisionNode node) {
-			
+
 			this.array = node.array;
 			this.count = node.count;
 		}
@@ -1078,12 +1078,12 @@ final static class HashCollisionNode implements INode{
 			this.count = hashCollisionNode.count;
 			int idx = hashCollisionNode.findIndex(key);
 			index = idx == -1 ? count * 2 : idx;
-			
+
 		}
 		public boolean hasNext() {
 			 return index < count * 2;
 		}
-		
+
 		public Object next() {
 			Object k = array[index++];
 			Object v = array[index++];
@@ -1092,9 +1092,9 @@ final static class HashCollisionNode implements INode{
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException();			
+			throw new UnsupportedOperationException();
 		}
-		
+
 	}
 	static final class ReverseHashCollisionNodeIterator implements Iterator {
 		Object[] array;
@@ -1108,7 +1108,7 @@ final static class HashCollisionNode implements INode{
 		public boolean hasNext() {
 			 return index >= 0;
 		}
-		
+
 		public Object next() {
 			Object v = array[index--];
 			Object k = array[index--];
@@ -1117,11 +1117,11 @@ final static class HashCollisionNode implements INode{
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException();			
+			throw new UnsupportedOperationException();
 		}
-		
+
 	}
-	
+
 	public Iterator nodeItFrom(int shift, int hash, Object key) {
 		return new HashCollisionNodeIterator(this,shift,hash,key);
 	}
@@ -1129,7 +1129,7 @@ final static class HashCollisionNode implements INode{
 		return reverse?new ReverseHashCollisionNodeIterator(this) : new HashCollisionNodeIterator(this);
 	}
 
-	
+
 	public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf){
 		if(hash == this.hash) {
 			int idx = findIndex(key);
@@ -1225,7 +1225,7 @@ final static class HashCollisionNode implements INode{
 			if(idx != -1) {
 				if(array[idx + 1] == val)
 					return this;
-				return editAndSet(edit, idx+1, val); 
+				return editAndSet(edit, idx+1, val);
 			}
 			if (array.length > 2*count) {
 				addedLeaf.val = addedLeaf;
@@ -1243,7 +1243,7 @@ final static class HashCollisionNode implements INode{
 		// nest it in a bitmap node
 		return new BitmapIndexedNode(edit, bitpos(this.hash, shift), new Object[] {null, this, null, null})
 			.assoc(edit, shift, hash, key, val, addedLeaf);
-	}	
+	}
 
 	public INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf){
 		int idx = findIndex(key);
@@ -1402,7 +1402,7 @@ static final class NodeSeq extends ASeq {
 	final Object[] array;
 	final int i;
 	final ISeq s;
-	
+
 	NodeSeq(Object[] array, int i) {
 		this(null, array, i, null);
 	}
@@ -1426,7 +1426,7 @@ static final class NodeSeq extends ASeq {
 		}
 		return null;
 	}
-	
+
 	NodeSeq(IPersistentMap meta, Object[] array, int i, ISeq s) {
 		super(meta);
 		this.array = array;
