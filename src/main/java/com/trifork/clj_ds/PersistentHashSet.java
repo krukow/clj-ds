@@ -71,7 +71,7 @@ public static <T> PersistentHashSet<T> createWithCheck(List<? extends T> init){
 		{
 		ret = (PersistentHashSet<T>) ret.cons(key);
 		if(ret.count() != i + 1)
-			throw new IllegalArgumentException("Duplicate key: " + key);		
+			throw new IllegalArgumentException("Duplicate key: " + key);
 		++i;
 		}
 	return ret;
@@ -96,7 +96,7 @@ PersistentHashSet(IPersistentMap meta, IPersistentMap impl){
 public Iterator<T> iterator(){
 	return new Iterator<T>() {
 		final Iterator<Map.Entry> iterator = impl.iterator();
-		
+
 		public boolean hasNext() {
 			return iterator.hasNext();
 		}
@@ -109,26 +109,26 @@ public Iterator<T> iterator(){
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
-		} 
-		
+		}
+
 	};
 }
 
 
-public IPersistentSet<T> disjoin(T key) throws Exception{
+public PersistentHashSet<T> disjoin(T key) {
 	if(contains(key))
 		return new PersistentHashSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet<T> cons(T o){
+public PersistentHashSet<T> cons(T o){
 	if(contains(o))
 		return this;
 	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection<T> empty(){
-	return EMPTY.withMeta(meta());	
+public PersistentHashSet<T> empty(){
+	return EMPTY.withMeta(meta());
 }
 
 public PersistentHashSet<T> withMeta(IPersistentMap meta){

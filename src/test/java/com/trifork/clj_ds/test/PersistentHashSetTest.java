@@ -1,18 +1,14 @@
 /**
- * 
+ *
  */
 package com.trifork.clj_ds.test;
 
-import static org.junit.Assert.assertEquals;
+import com.trifork.clj_ds.PersistentHashSet;
+import org.junit.Test;
 
 import java.util.HashSet;
 
-import org.junit.Test;
-
-import com.trifork.clj_ds.IPersistentCollection;
-import com.trifork.clj_ds.PersistentHashSet;
-import com.trifork.clj_ds.PersistentVector;
-import com.trifork.clj_ds.RT;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author krukow
@@ -47,7 +43,7 @@ public class PersistentHashSetTest {
 			dsSet = (PersistentHashSet<Integer>) dsSet.cons(o);
 
 		}
-		
+
 	}
 
 }

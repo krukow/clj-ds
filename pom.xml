@@ -3,7 +3,7 @@
     <groupId>com.github.krukow</groupId>
     <artifactId>clj-ds</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2</version>
     <name>clj-ds</name>
     <url>http://github.com/krukow/clj-ds</url>
     <description>
@@ -34,19 +34,15 @@
     </scm>
 
     <distributionManagement>
-
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-
         <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>Nexus Release Repository</name>
-            <url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+          <id>nexus</id>
+          <url>https://nexus.knewton.net/nexus/content/repositories/releases</url>
         </repository>
-
+        <snapshotRepository>
+          <id>nexus</id>
+          <name>Internal Snapshots</name>
+          <url>https://nexus.knewton.net/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <dependencies>

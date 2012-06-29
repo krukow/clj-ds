@@ -106,12 +106,12 @@ public IMapEntry<K,V> entryAt(K key){
 	return null;
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) throws RuntimeException {
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0)
 		{
-		throw new Exception("Key already present");
+		throw new RuntimeException("Key already present");
 		}
 	else //didn't have key, grow
 		{
@@ -339,7 +339,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 		System.arraycopy(array, 0, this.array, 0, array.length);
 		this.len = array.length;
 	}
-	
+
 	private int indexOf(Object key){
 		for(int i = 0; i < len; i += 2)
 			{
@@ -390,7 +390,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 	int doCount() {
 		return len / 2;
 	}
-	
+
 	IPersistentMap<K,V> doPersistent(){
 		ensureEditable();
 		owner = null;

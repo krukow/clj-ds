@@ -19,9 +19,9 @@ public interface IPersistentMap<K,V> extends Iterable<Map.Entry<K, V>>, Associat
 
 IPersistentMap<K,V> assoc(K key, V val);
 
-IPersistentMap<K,V> assocEx(K key, V val) throws Exception;
+IPersistentMap<K,V> assocEx(K key, V val);
 
-IPersistentMap<K,V> without(K key) throws Exception;
+IPersistentMap<K,V> without(K key);
 
 Iterator<Map.Entry<K, V>> iteratorFrom(K key);
 

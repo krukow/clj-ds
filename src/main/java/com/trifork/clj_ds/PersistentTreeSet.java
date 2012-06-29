@@ -42,19 +42,19 @@ PersistentTreeSet(IPersistentMap meta, IPersistentMap impl){
 	this._meta = meta;
 }
 
-public IPersistentSet<T> disjoin(T key) throws Exception{
+public PersistentTreeSet<T> disjoin(T key) throws Exception{
 	if(contains(key))
 		return new PersistentTreeSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet<T> cons(T o){
+public PersistentTreeSet<T> cons(T o){
 	if(contains(o))
 		return this;
 	return new PersistentTreeSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection<T> empty(){
+public PersistentTreeSet<T> empty(){
 	return new PersistentTreeSet<T>(meta(),(PersistentTreeMap)impl.empty());
 }
 
