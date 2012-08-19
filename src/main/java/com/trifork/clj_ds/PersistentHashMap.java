@@ -1037,8 +1037,7 @@ final static class BitmapIndexedNode implements INode{
 				return editAndSet(edit, 2*idx+1, n); 
 			if (bitmap == bit) 
 				return null;
-			removedLeaf.val = removedLeaf;
-			return editAndRemovePair(edit, bit, idx); 
+			return editAndRemovePair(edit, bit, idx);
 		}
 		if(Util.equals(key, keyOrNull)) {
 			removedLeaf.val = removedLeaf;
@@ -1193,7 +1192,9 @@ final static class HashCollisionNode implements INode{
 	private HashCollisionNode ensureEditable(AtomicReference<Thread> edit){
 		if(this.edit == edit)
 			return this;
-		return new HashCollisionNode(edit, hash, count, array);
+		Object[] newArray = new Object[2*(count+1)]; // make room for next assoc
+		System.arraycopy(array, 0, newArray, 0, 2*count);
+		return new HashCollisionNode(edit, hash, count, newArray);
 	}
 
 	private HashCollisionNode ensureEditable(AtomicReference<Thread> edit, int count, Object[] array){
@@ -1249,6 +1250,7 @@ final static class HashCollisionNode implements INode{
 		int idx = findIndex(key);
 		if(idx == -1)
 			return this;
+		removedLeaf.val = removedLeaf;
 		if(count == 1)
 			return null;
 		HashCollisionNode editable = ensureEditable(edit);
