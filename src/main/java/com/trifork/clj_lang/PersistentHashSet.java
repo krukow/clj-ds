@@ -16,7 +16,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T> {
+import com.trifork.clj_ds.PersistentSet;
+
+public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T>, PersistentSet<T> {
 
 static public final PersistentHashSet EMPTY = new PersistentHashSet(null, PersistentHashMap.EMPTY);
 
@@ -35,7 +37,7 @@ public static <T> PersistentHashSet<T> create(T... init){
 	return ret;
 }
 
-public static <T> PersistentHashSet<T> create(List<? extends T> init){
+public static <T> PersistentHashSet<T> create(Iterable<? extends T> init){
 	PersistentHashSet<T> ret = EMPTY;
 	for(T key : init)
 		{
@@ -127,7 +129,7 @@ public IPersistentSet<T> cons(T o){
 	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection<T> empty(){
+public PersistentSet<T> empty(){
 	return EMPTY.withMeta(meta());	
 }
 

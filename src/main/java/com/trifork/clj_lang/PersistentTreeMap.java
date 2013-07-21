@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
+import com.trifork.clj_ds.PersistentSortedMap;
+
 /**
  * Persistent Red Black Tree
  * Note that instances of this class are constant values
@@ -25,7 +27,7 @@ import java.util.Stack;
  * See Okasaki, Kahrs, Larsen et al
  */
 
-public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements IObj, Reversible<Map.Entry<K, V>>, Sorted<K>{
+public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements IObj, Reversible<Map.Entry<K, V>>, Sorted<K>, PersistentSortedMap<K, V>{
 
 public final Comparator<K> comp;
 public final Node tree;
@@ -34,8 +36,8 @@ final IPersistentMap _meta;
 
 final static public PersistentTreeMap EMPTY = new PersistentTreeMap();
 
-static public <K,V> IPersistentMap<K,V> create(Map<? extends K,? extends V> other){
-	IPersistentMap<K,V> ret = EMPTY;
+static public <K,V> PersistentTreeMap<K,V> create(Map<? extends K,? extends V> other){
+	PersistentTreeMap<K,V> ret = EMPTY;
 	for(Map.Entry<? extends K,? extends V> o : other.entrySet())
 		{
 		ret = ret.assoc(o.getKey(), o.getValue());

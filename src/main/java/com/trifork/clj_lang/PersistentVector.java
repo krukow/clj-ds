@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import jsr166y.ForkJoinPool;
 import jsr166y.RecursiveTask;
 
-public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>{
+public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>, com.trifork.clj_ds.PersistentVector<T>{
 
 static class Node implements Serializable {
 	transient final AtomicReference<Thread> edit;
@@ -66,7 +66,7 @@ static public <T> PersistentVector<T> create(ISeq<? extends T> items){
 }
 
 @SuppressWarnings("unchecked")
-static public <T> PersistentVector<T> create(List<? extends T> items){
+static public <T> PersistentVector<T> create(Iterable<? extends T> items){
 	TransientVector<T> ret = EMPTY.asTransient();
 	for(T item : items)
 		ret = ret.conj(item);
@@ -452,7 +452,7 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 	}
 }
 
-public IPersistentCollection<T> empty(){
+public PersistentVector<T> empty(){
 	return EMPTY.withMeta(meta());
 }
 

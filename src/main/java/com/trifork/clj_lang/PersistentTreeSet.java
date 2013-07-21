@@ -14,7 +14,9 @@ package com.trifork.clj_lang;
 
 import java.util.Comparator;
 
-public class PersistentTreeSet<T> extends APersistentSet<T> implements IObj, Reversible<T>, Sorted<T>{
+import com.trifork.clj_ds.PersistentSortedSet;
+
+public class PersistentTreeSet<T> extends APersistentSet<T> implements IObj, Reversible<T>, Sorted<T>, PersistentSortedSet<T>{
 static public final PersistentTreeSet EMPTY = new PersistentTreeSet(null, PersistentTreeMap.EMPTY);
 final IPersistentMap _meta;
 
@@ -42,19 +44,19 @@ PersistentTreeSet(IPersistentMap meta, IPersistentMap impl){
 	this._meta = meta;
 }
 
-public IPersistentSet<T> disjoin(T key) {
+public PersistentTreeSet<T> disjoin(T key) {
 	if(contains(key))
 		return new PersistentTreeSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet<T> cons(T o){
+public PersistentTreeSet<T> cons(T o){
 	if(contains(o))
 		return this;
 	return new PersistentTreeSet<T>(meta(),impl.assoc(o,o));
 }
 
-public IPersistentCollection<T> empty(){
+public PersistentTreeSet<T> empty(){
 	return new PersistentTreeSet<T>(meta(),(PersistentTreeMap)impl.empty());
 }
 

@@ -11,9 +11,14 @@
 package com.trifork.clj_lang;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.trifork.clj_ds.PersistentMap;
 
 /*
  A persistent rendition of Phil Bagwell's Hash Array Mapped Trie
@@ -25,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  Any errors are my own
  */
 
-public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, IObj {
+public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, IObj, PersistentMap<K, V> {
 
 final int count;
 final INode root;
@@ -42,9 +47,9 @@ final public static <K,V> PersistentHashMap<K, V> emptyMap() {
 }
 
 @SuppressWarnings("unchecked")
-static public <K,V> PersistentHashMap<K,V> create(Map<K,V> other){
+static public <K,V> PersistentHashMap<K,V> create(Map<? extends K,? extends V> other){
 	ITransientMap<K,V> ret = EMPTY.asTransient();
-	for(Map.Entry<K, V> e : other.entrySet())
+	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
 		{
 		ret = ret.assoc(e.getKey(), e.getValue());
 		}
@@ -141,7 +146,7 @@ public IMapEntry<K,V> entryAt(K key){
 	return (root != null) ? root.find(0, hash(key), key) : null;
 }
 
-public IPersistentMap<K,V> assoc(K key, V val){
+public PersistentMap<K,V> assoc(K key, V val){
 	if(key == null) {
 		if(hasNull && val == nullValue)
 			return this;
@@ -165,13 +170,13 @@ public V valAt(K key){
 	return valAt(key, null);
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) {
+public PersistentMap<K,V> assocEx(K key, V val) {
 	if(containsKey(key))
 		throw Util.runtimeException("Key already present");
 	return assoc(key, val);
 }
 
-public IPersistentMap<K,V> without(K key){
+public PersistentMap<K,V> without(K key){
 	if(key == null)
 		return hasNull ? new PersistentHashMap<K,V>(meta(), count - 1, root, false, null) : this;
 	if(root == null)

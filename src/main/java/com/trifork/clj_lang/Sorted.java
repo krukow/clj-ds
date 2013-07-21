@@ -19,7 +19,7 @@ Comparator<K> comparator();
 
 Object entryKey(Object entry);
 
-ISeq seq(boolean ascending);
+ISeq<K> seq(boolean ascending);
 
-ISeq seqFrom(K key, boolean ascending);
+ISeq<K> seqFrom(K key, boolean ascending);
 }

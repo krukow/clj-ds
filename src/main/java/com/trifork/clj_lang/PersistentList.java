@@ -18,16 +18,16 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-public class PersistentList<T> extends ASeq<T> implements IPersistentList<T>, IReduce, List<T>, Counted {
+public class PersistentList<T> extends ASeq<T> implements IPersistentList<T>, IReduce, List<T>, Counted, com.trifork.clj_ds.PersistentList<T> {
 
 private final T _first;
-private final IPersistentList<T> _rest;
+private final PersistentList<T> _rest;
 private final int _count;
 
 final public static EmptyList EMPTY = new EmptyList(null);
 
-public static final <T> IPersistentList<T> emptyList() {
-return (IPersistentList<T>) EMPTY;
+public static final <T> EmptyList<T> emptyList() {
+return EMPTY;
 }
 
 public PersistentList(T first){
@@ -37,18 +37,32 @@ public PersistentList(T first){
 	this._count = 1;
 }
 
-PersistentList(IPersistentMap meta, T _first, IPersistentList<T> _rest, int _count){
+PersistentList(IPersistentMap meta, T _first, PersistentList<T> _rest, int _count){
 	super(meta);
 	this._first = _first;
 	this._rest = _rest;
 	this._count = _count;
 }
 
-public static <T> IPersistentList<T> create(List<? extends T> init){
-	IPersistentList<T> ret = emptyList();
+public static <T> com.trifork.clj_ds.PersistentList<T> create(T... init){
+	com.trifork.clj_ds.PersistentList<T> ret = emptyList();
+	for(int i = init.length-1; i>=0; i--)
+		{
+		ret = ret.cons(init[i]);
+		}
+	return ret;
+}
+
+public static <T> com.trifork.clj_ds.PersistentList<T> create(Iterable<? extends T> init) {
+	PersistentVector<T> initVector = PersistentVector.create(init);
+	return create(initVector);
+}
+
+public static <T> com.trifork.clj_ds.PersistentList<T> create(List<? extends T> init){
+	com.trifork.clj_ds.PersistentList<T> ret = emptyList();
 	for(ListIterator<? extends T> i = init.listIterator(init.size()); i.hasPrevious();)
 		{
-		ret = (IPersistentList) ret.cons(i.previous());
+		ret = ret.cons(i.previous());
 		}
 	return ret;
 }
@@ -67,7 +81,7 @@ public T peek(){
 	return first();
 }
 
-public IPersistentList<T> pop(){
+public com.trifork.clj_ds.PersistentList<T> pop(){
 	if(_rest == null)
 		return EMPTY.withMeta(_meta);
 	return _rest;
@@ -82,7 +96,7 @@ public PersistentList<T> cons(T o){
 }
 
 
-public IPersistentCollection<T> empty(){
+public EmptyList<T> empty(){
 	return EMPTY.withMeta(meta());
 }
 
@@ -107,7 +121,7 @@ public Object reduce(IFn f, Object start) {
 }
 
 
-    static class EmptyList<T> extends Obj implements IPersistentList<T>, List<T>, ISeq<T>, Counted{
+    static class EmptyList<T> extends Obj implements IPersistentList<T>, List<T>, ISeq<T>, Counted, com.trifork.clj_ds.PersistentList<T>{
 
 	public int hashCode(){
 		return 1;
@@ -141,7 +155,7 @@ public Object reduce(IFn f, Object start) {
 		return new PersistentList<T>(meta(), o, null, 1);
 	}
 
-	public IPersistentCollection<T> empty(){
+	public EmptyList<T> empty(){
 		return this;
 	}
 
@@ -155,7 +169,7 @@ public Object reduce(IFn f, Object start) {
 		return null;
 	}
 
-	public IPersistentList<T> pop(){
+	public PersistentList<T> pop(){
 		throw new IllegalStateException("Can't pop empty list");
 	}
 

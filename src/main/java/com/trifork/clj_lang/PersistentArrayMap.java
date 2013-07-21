@@ -13,6 +13,8 @@ package com.trifork.clj_lang;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.trifork.clj_ds.PersistentMap;
+
 /**
  * Simple implementation of persistent map on an array
  * <p/>
@@ -24,7 +26,7 @@ import java.util.Map;
  * null keys and values are ok, but you won't be able to distinguish a null value via valAt - use contains/entryAt
  */
 
-public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements IObj, IEditableCollection<MapEntry<K, V>> {
+public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements IObj, IEditableCollection<MapEntry<K, V>>, PersistentMap<K,V> {
 
 final Object[] array;
 static final int HASHTABLE_THRESHOLD = 16;
@@ -33,13 +35,13 @@ public static final PersistentArrayMap EMPTY = new PersistentArrayMap();
 private final IPersistentMap _meta;
 
 @SuppressWarnings("unchecked")
-static public <K,V> IPersistentMap<K,V> create(Map<? extends K, ? extends V> other){
+static public <K,V> PersistentMap<K,V> create(Map<? extends K, ? extends V> other){
 	ITransientMap<K,V> ret = EMPTY.asTransient();
 	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
 		{
 		ret = ret.assoc(e.getKey(), e.getValue());
 		}
-	return ret.persistentMap();
+	return (PersistentMap<K, V>) ret.persistentMap();
 }
 
 protected PersistentArrayMap(){
@@ -56,7 +58,7 @@ PersistentArrayMap<K,V> create(Object... init){
 }
 
 
-IPersistentMap<K,V> createHT(Object[] init){
+PersistentHashMap<K,V> createHT(Object[] init){
 	return PersistentHashMap.create(meta(), init);
 }
 
@@ -168,7 +170,7 @@ public IMapEntry<K,V> entryAt(K key){
 	return null;
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) {
+public PersistentMap<K,V> assocEx(K key, V val) {
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0)
@@ -188,7 +190,7 @@ public IPersistentMap<K,V> assocEx(K key, V val) {
 	return create(newArray);
 }
 
-public IPersistentMap<K,V> assoc(K key, V val){
+public PersistentMap<K,V> assoc(K key, V val){
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0) //already have key, same-sized replacement
@@ -211,7 +213,7 @@ public IPersistentMap<K,V> assoc(K key, V val){
 	return create(newArray);
 }
 
-public IPersistentMap<K,V> without(K key){
+public PersistentArrayMap<K,V> without(K key){
 	int i = indexOf(key);
 	if(i >= 0) //have key, will remove
 		{
@@ -234,8 +236,8 @@ public IPersistentMap<K,V> without(K key){
 	return this;
 }
 
-public IPersistentMap<K,V> empty(){
-	return (IPersistentMap<K,V>) EMPTY.withMeta(meta());
+public PersistentArrayMap<K,V> empty(){
+	return (PersistentArrayMap<K,V>) EMPTY.withMeta(meta());
 }
 
 final public V valAt(K key, V notFound){
