@@ -70,7 +70,7 @@ public class PersistentVectorTest {
 		}
 		IPersistentVector vector = PersistentVector.vectormap(new AFn() {
 			@Override
-			public Object invoke(Object arg1) throws Exception {
+			public Object invoke(Object arg1) {
 				Integer s = (Integer )arg1;
 				return s.intValue()*2;
 			}
@@ -90,12 +90,16 @@ public class PersistentVectorTest {
 	public static void main(String[] args) {
 		AFn mapfn = new AFn() {
 			@Override
-			public Object invoke(Object arg1) throws Exception {
-				Integer s = (Integer )arg1;
-				double pow = Math.pow(s,2);
-				long round = Math.round(pow);
-				Thread.sleep(1);
-				return ((Long) round).toString();
+			public Object invoke(Object arg1) {
+				try {
+					Integer s = (Integer )arg1;
+					double pow = Math.pow(s,2);
+					long round = Math.round(pow);
+					Thread.sleep(1);
+					return ((Long) round).toString();
+				} catch (InterruptedException e) {
+					throw Util.sneakyThrow(e);
+				}
 			}
 		};
 		//IPersistentVector vec2 = mapArray();

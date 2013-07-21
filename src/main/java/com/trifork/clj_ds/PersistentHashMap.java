@@ -11,8 +11,8 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 /*
@@ -66,6 +66,16 @@ public static <K,V> PersistentHashMap<K,V> create(Object... init){
 	return (PersistentHashMap<K,V>) ret.persistentMap();
 }
 
+public static <K,V> PersistentHashMap<K,V> createWithCheck(Object... init){
+	ITransientMap<K, V> ret = EMPTY.asTransient();
+	for(int i = 0; i < init.length; i += 2)
+		{
+		ret = ret.assoc((K) init[i], (V) init[i + 1]);
+		if(ret.count() != i/2 + 1)
+			throw new IllegalArgumentException("Duplicate key: " + init[i]);
+		}
+	return (PersistentHashMap<K, V>) ret.persistentMap();
+}
 
 static public <K,V> PersistentHashMap<K,V> create(ISeq items){
 	ITransientMap<K,V> ret = EMPTY.asTransient();
@@ -78,6 +88,18 @@ static public <K,V> PersistentHashMap<K,V> create(ISeq items){
 	return (PersistentHashMap<K,V>) ret.persistentMap();
 }
 
+static public <K, V> PersistentHashMap<K, V> createWithCheck(ISeq items){
+	ITransientMap<K, V> ret = EMPTY.asTransient();
+	for(int i=0; items != null; items = items.next().next(), ++i)
+		{
+		if(items.next() == null)
+			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
+		ret = ret.assoc((K) items.first(), (V) RT.second(items));
+		if(ret.count() != i + 1)
+			throw new IllegalArgumentException("Duplicate key: " + items.first());
+		}
+	return (PersistentHashMap<K, V>) ret.persistentMap();
+}
 
 /*
  * @param init {key1,val1,key2,val2,...}
@@ -103,16 +125,20 @@ public PersistentHashMap(IPersistentMap meta, int count, INode root, boolean has
 	this.nullValue = nullValue;
 }
 
+static int hash(Object k){
+	return Util.hasheq(k);
+}
+
 public boolean containsKey(Object key){
 	if(key == null)
 		return hasNull;
-	return (root != null) ? root.find(0, Util.hash(key), key, NOT_FOUND) != NOT_FOUND : false;
+	return (root != null) ? root.find(0, hash(key), key, NOT_FOUND) != NOT_FOUND : false;
 }
 
 public IMapEntry<K,V> entryAt(K key){
 	if(key == null)
 		return hasNull ? new MapEntry<K,V>(null, nullValue) : null;
-	return (root != null) ? root.find(0, Util.hash(key), key) : null;
+	return (root != null) ? root.find(0, hash(key), key) : null;
 }
 
 public IPersistentMap<K,V> assoc(K key, V val){
@@ -123,7 +149,7 @@ public IPersistentMap<K,V> assoc(K key, V val){
 	}
 	Box addedLeaf = new Box(null);
 	INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root) 
-			.assoc(0, Util.hash(key), key, val, addedLeaf);
+			.assoc(0, hash(key), key, val, addedLeaf);
 	if(newroot == root)
 		return this;
 	return new PersistentHashMap<K,V>(meta(), addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
@@ -132,16 +158,16 @@ public IPersistentMap<K,V> assoc(K key, V val){
 public V valAt(K key, V notFound){
 	if(key == null)
 		return hasNull ? nullValue : notFound;
-	return (V) (root != null ? root.find(0, Util.hash(key), key, notFound) : notFound);
+	return (V) (root != null ? root.find(0, hash(key), key, notFound) : notFound);
 }
 
 public V valAt(K key){
 	return valAt(key, null);
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) {
 	if(containsKey(key))
-		throw new Exception("Key already present");
+		throw Util.runtimeException("Key already present");
 	return assoc(key, val);
 }
 
@@ -150,7 +176,7 @@ public IPersistentMap<K,V> without(K key){
 		return hasNull ? new PersistentHashMap<K,V>(meta(), count - 1, root, false, null) : this;
 	if(root == null)
 		return this;
-	INode newroot = root.without(0, Util.hash(key), key);
+	INode newroot = root.without(0, hash(key), key);
 	if(newroot == root)
 		return this;
 	return new PersistentHashMap<K,V>(meta(), count - 1, newroot, hasNull, nullValue); 
@@ -233,6 +259,31 @@ public Iterator<Map.Entry<K, V>> reverseIterator(){
 	} : s;
 }
 
+public Object kvreduce(IFn f, Object init){
+    init = hasNull?f.invoke(init,null,nullValue):init;
+	if(RT.isReduced(init))
+		return ((IDeref)init).deref();
+	if(root != null){
+        return root.kvreduce(f,init);
+    }
+    return init;
+}
+
+public Object fold(long n, final IFn combinef, final IFn reducef,
+                   IFn fjinvoke, final IFn fjtask, final IFn fjfork, final IFn fjjoin){
+	//we are ignoring n for now
+	Callable top = new Callable(){
+		public Object call() throws Exception{
+			Object ret = combinef.invoke();
+			if(root != null)
+				ret = combinef.invoke(ret, root.fold(combinef,reducef,fjtask,fjfork,fjjoin));
+			return hasNull?
+			       combinef.invoke(ret,reducef.invoke(combinef.invoke(),null,nullValue))
+			       :ret;
+		}
+	};
+	return fjinvoke.invoke(top);
+}
 
 public int count(){
 	return count;
@@ -245,7 +296,7 @@ public ISeq<IMapEntry<K, V>> seq(){
 
 public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
 	if (hasNull) {throw new UnsupportedOperationException("not supported for maps with null entries yet");}
-	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, Util.hash(key), key) : new EmptyIterator(); 
+	Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, hash(key), key) : new EmptyIterator(); 
 	return s;
 }
 
@@ -304,7 +355,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 //		Box leafFlag = new Box(null);
 		leafFlag.val = null;
 		INode n = (root == null ? BitmapIndexedNode.EMPTY : root)
-			.assoc(edit, 0, Util.hash(key), key, val, leafFlag);
+			.assoc(edit, 0, hash(key), key, val, leafFlag);
 		if (n != this.root)
 			this.root = n; 
 		if(leafFlag.val != null) this.count++;
@@ -322,7 +373,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 		if (root == null) return this;
 //		Box leafFlag = new Box(null);
 		leafFlag.val = null;
-		INode n = root.without(edit, 0, Util.hash(key), key, leafFlag);
+		INode n = root.without(edit, 0, hash(key), key, leafFlag);
 		if (n != root)
 			this.root = n;
 		if(leafFlag.val != null) this.count--;
@@ -342,7 +393,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 				return notFound;
 		if (root == null)
 			return null;
-		return (V) root.find(0, Util.hash(key), key, notFound);
+		return (V) root.find(0, hash(key), key, notFound);
 	}
 
 	int doCount() {
@@ -383,6 +434,10 @@ static interface INode extends Serializable {
 	INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf);
 
 	INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf);
+	
+    public Object kvreduce(IFn f, Object init);
+
+	Object fold(IFn combinef, IFn reducef, IFn fjtask, IFn fjfork, IFn fjjoin);
 }
 
 final static class ArrayNode implements INode{
@@ -536,6 +591,63 @@ final static class ArrayNode implements INode{
 	
 	public ISeq nodeSeq(){
 		return Seq.create(array);
+	}
+
+    public Object kvreduce(IFn f, Object init){
+        for(INode node : array){
+            if(node != null){
+                init = node.kvreduce(f,init);
+	            if(RT.isReduced(init))
+		            return ((IDeref)init).deref();
+	            }
+	        }
+        return init;
+    }
+
+	public Object fold(final IFn combinef, final IFn reducef,
+	                   final IFn fjtask, final IFn fjfork, final IFn fjjoin){
+		List<Callable> tasks = new ArrayList();
+		for(final INode node : array){
+			if(node != null){
+				tasks.add(new Callable(){
+					public Object call() throws Exception{
+						return node.fold(combinef, reducef, fjtask, fjfork, fjjoin);
+					}
+				});
+				}
+			}
+
+		return foldTasks(tasks,combinef,fjtask,fjfork,fjjoin);
+		}
+
+	static public Object foldTasks(List<Callable> tasks, final IFn combinef,
+	                          final IFn fjtask, final IFn fjfork, final IFn fjjoin){
+
+		if(tasks.isEmpty())
+			return combinef.invoke();
+
+		if(tasks.size() == 1){
+			Object ret = null;
+			try
+				{
+				return tasks.get(0).call();
+				}
+			catch(Exception e)
+				{
+				//aargh
+				}
+			}
+
+		List<Callable> t1 = tasks.subList(0,tasks.size()/2);
+		final List<Callable> t2 = tasks.subList(tasks.size()/2, tasks.size());
+
+		Object forked = fjfork.invoke(fjtask.invoke(new Callable() {
+			public Object call() throws Exception{
+				return foldTasks(t2,combinef,fjtask,fjfork,fjjoin);
+			}
+		}));
+
+		return combinef.invoke(foldTasks(t1,combinef,fjtask,fjfork,fjjoin),fjjoin.invoke(forked));
 	}
 
 	private ArrayNode ensureEditable(AtomicReference<Thread> edit){
@@ -836,7 +948,7 @@ final static class BitmapIndexedNode implements INode{
 					return this;
 				return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2*idx+1, n));
 			} 
-			if(Util.equals(key, keyOrNull)) {
+			if(Util.equiv(key, keyOrNull)) {
 				if(val == valOrNode)
 					return this;
 				return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2*idx+1, val));
@@ -858,7 +970,7 @@ final static class BitmapIndexedNode implements INode{
 						if (array[j] == null)
 							nodes[i] = (INode) array[j+1];
 						else
-							nodes[i] = EMPTY.assoc(shift + 5, Util.hash(array[j]), array[j], array[j+1], addedLeaf);
+							nodes[i] = EMPTY.assoc(shift + 5, hash(array[j]), array[j], array[j+1], addedLeaf);
 						j += 2;
 					}
 				return new ArrayNode(null, n + 1, nodes);
@@ -891,7 +1003,7 @@ final static class BitmapIndexedNode implements INode{
 				return null;
 			return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
 		}
-		if(Util.equals(key, keyOrNull))
+		if(Util.equiv(key, keyOrNull))
 			// TODO: collapse
 			return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
 		return this;
@@ -906,7 +1018,7 @@ final static class BitmapIndexedNode implements INode{
 		Object valOrNode = array[2*idx+1];
 		if(keyOrNull == null)
 			return ((INode) valOrNode).find(shift + 5, hash, key);
-		if(Util.equals(key, keyOrNull))
+		if(Util.equiv(key, keyOrNull))
 			return new MapEntry(keyOrNull, valOrNode);
 		return null;
 	}
@@ -920,13 +1032,21 @@ final static class BitmapIndexedNode implements INode{
 		Object valOrNode = array[2*idx+1];
 		if(keyOrNull == null)
 			return ((INode) valOrNode).find(shift + 5, hash, key, notFound);
-		if(Util.equals(key, keyOrNull))
+		if(Util.equiv(key, keyOrNull))
 			return valOrNode;
 		return notFound;
 	}
 
 	public ISeq nodeSeq(){
 		return NodeSeq.create(array);
+	}
+
+   public Object kvreduce(IFn f, Object init){
+        return NodeSeq.kvreduce(array,f,init);
+   }
+
+	public Object fold(IFn combinef, IFn reducef, IFn fjtask, IFn fjfork, IFn fjjoin){
+		return NodeSeq.kvreduce(array, reducef, combinef.invoke());
 	}
 
 	private BitmapIndexedNode ensureEditable(AtomicReference<Thread> edit){
@@ -974,7 +1094,7 @@ final static class BitmapIndexedNode implements INode{
 					return this;
 				return editAndSet(edit, 2*idx+1, n);
 			} 
-			if(Util.equals(key, keyOrNull)) {
+			if(Util.equiv(key, keyOrNull)) {
 				if(val == valOrNode)
 					return this;
 				return editAndSet(edit, 2*idx+1, val);
@@ -1003,7 +1123,7 @@ final static class BitmapIndexedNode implements INode{
 						if (array[j] == null)
 							nodes[i] = (INode) array[j+1];
 						else
-							nodes[i] = EMPTY.assoc(edit, shift + 5, Util.hash(array[j]), array[j], array[j+1], addedLeaf);
+							nodes[i] = EMPTY.assoc(edit, shift + 5, hash(array[j]), array[j], array[j+1], addedLeaf);
 						j += 2;
 					}
 				return new ArrayNode(edit, n + 1, nodes);
@@ -1037,9 +1157,9 @@ final static class BitmapIndexedNode implements INode{
 				return editAndSet(edit, 2*idx+1, n); 
 			if (bitmap == bit) 
 				return null;
-			return editAndRemovePair(edit, bit, idx);
+			return editAndRemovePair(edit, bit, idx); 
 		}
-		if(Util.equals(key, keyOrNull)) {
+		if(Util.equiv(key, keyOrNull)) {
 			removedLeaf.val = removedLeaf;
 			// TODO: collapse
 			return editAndRemovePair(edit, bit, idx); 			
@@ -1162,7 +1282,7 @@ final static class HashCollisionNode implements INode{
 		int idx = findIndex(key);
 		if(idx < 0)
 			return null;
-		if(Util.equals(key, array[idx]))
+		if(Util.equiv(key, array[idx]))
 			return new MapEntry(array[idx], array[idx+1]);
 		return null;
 	}
@@ -1171,7 +1291,7 @@ final static class HashCollisionNode implements INode{
 		int idx = findIndex(key);
 		if(idx < 0)
 			return notFound;
-		if(Util.equals(key, array[idx]))
+		if(Util.equiv(key, array[idx]))
 			return array[idx+1];
 		return notFound;
 	}
@@ -1180,10 +1300,18 @@ final static class HashCollisionNode implements INode{
 		return NodeSeq.create(array);
 	}
 
+   public Object kvreduce(IFn f, Object init){
+        return NodeSeq.kvreduce(array,f,init);
+   }
+
+	public Object fold(IFn combinef, IFn reducef, IFn fjtask, IFn fjfork, IFn fjjoin){
+		return NodeSeq.kvreduce(array, reducef, combinef.invoke());
+	}
+
 	public int findIndex(Object key){
 		for(int i = 0; i < 2*count; i+=2)
 			{
-			if(Util.equals(key, array[i]))
+			if(Util.equiv(key, array[i]))
 				return i;
 			}
 		return -1;
@@ -1376,7 +1504,7 @@ private static Object[] removePair(Object[] array, int i) {
 }
 
 private static INode createNode(int shift, Object key1, Object val1, int key2hash, Object key2, Object val2) {
-	int key1hash = Util.hash(key1);
+	int key1hash = hash(key1);
 	if(key1hash == key2hash)
 		return new HashCollisionNode(null, key1hash, 2, new Object[] {key1, val1, key2, val2});
 	Box _ = new Box(null);
@@ -1387,7 +1515,7 @@ private static INode createNode(int shift, Object key1, Object val1, int key2has
 }
 
 private static INode createNode(AtomicReference<Thread> edit, int shift, Object key1, Object val1, int key2hash, Object key2, Object val2) {
-	int key1hash = Util.hash(key1);
+	int key1hash = hash(key1);
 	if(key1hash == key2hash)
 		return new HashCollisionNode(null, key1hash, 2, new Object[] {key1, val1, key2, val2});
 	Box _ = new Box(null);
@@ -1412,6 +1540,23 @@ static final class NodeSeq extends ASeq {
 	static ISeq create(Object[] array) {
 		return create(array, 0, null);
 	}
+
+    static public Object kvreduce(Object[] array, IFn f, Object init){
+        for(int i=0;i<array.length;i+=2)
+            {
+            if(array[i] != null)
+                init = f.invoke(init, array[i], array[i+1]);
+            else
+                {
+                INode node = (INode) array[i+1];
+                if(node != null)
+                    init = node.kvreduce(f,init);
+                }
+            if(RT.isReduced(init))
+	             return ((IDeref)init).deref();
+            }
+       return init;
+   }
 
 	private static ISeq create(Object[] array, int i, ISeq s) {
 		if(s != null)

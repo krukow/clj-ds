@@ -13,7 +13,7 @@
 package com.trifork.clj_ds;
 
 public interface IReduce{
-Object reduce(IFn f) throws Exception;
+Object reduce(IFn f) ;
 
-Object reduce(IFn f, Object start) throws Exception;
+Object reduce(IFn f, Object start) ;
 }

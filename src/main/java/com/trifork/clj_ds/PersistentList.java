@@ -92,14 +92,14 @@ public PersistentList<T> withMeta(IPersistentMap meta){
 	return this;
 }
 
-public Object reduce(IFn f) throws Exception{
+public Object reduce(IFn f) {
 	Object ret = first();
 	for(ISeq s = next(); s != null; s = s.next())
 		ret = f.invoke(ret, s.first());
 	return ret;
 }
 
-public Object reduce(IFn f, Object start) throws Exception{
+public Object reduce(IFn f, Object start) {
 	Object ret = f.invoke(start, first());
 	for(ISeq s = next(); s != null; s = s.next())
 		ret = f.invoke(ret, s.first());

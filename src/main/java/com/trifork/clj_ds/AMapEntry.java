@@ -56,7 +56,6 @@ public Object setValue(Object value){
 	throw new UnsupportedOperationException();
 }
 
-
 /*
 
 public boolean equals(Object obj){
@@ -78,7 +77,7 @@ public String toString(){
 	catch(Exception e)
 		{
 		//checked exceptions stink!
-		throw new RuntimeException(e);
+		throw Util.sneakyThrow(e);
 		}
 	return sw.toString();
 }
@@ -141,7 +140,7 @@ public Object peek(){
 }
 
 
-public ISeq rseq() throws Exception{
+public ISeq rseq() {
 	return asVector().rseq();
 }
 */

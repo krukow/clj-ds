@@ -14,7 +14,7 @@ package com.trifork.clj_ds;
 
 import java.util.*;
 
-public final class LazySeq extends Obj implements ISeq, List{
+public final class LazySeq extends Obj implements ISeq, Sequential, List, IPending, IHashEq{
 
 private IFn fn;
 private Object sv;
@@ -42,9 +42,13 @@ final synchronized Object sval(){
 			sv = fn.invoke();
 			fn = null;
 			}
+		catch(RuntimeException e)
+			{
+			throw e;
+			}
 		catch(Exception e)
 			{
-			throw new RuntimeException(e);
+			throw Util.sneakyThrow(e);
 			}
 		}
 	if(sv != null)
@@ -108,7 +112,17 @@ public boolean equiv(Object o){
 }
 
 public int hashCode(){
+	ISeq s = seq();
+	if(s == null)
+		return 1;
 	return Util.hash(seq());
+}
+
+public int hasheq(){
+	ISeq s = seq();
+	if(s == null)
+		return 1;
+	return Util.hasheq(seq());
 }
 
 public boolean equals(Object o){
@@ -160,19 +174,7 @@ public boolean containsAll(Collection c){
 }
 
 public Object[] toArray(Object[] a){
-	if(a.length >= count())
-		{
-		ISeq s = seq();
-		for(int i = 0; s != null; ++i, s = s.next())
-			{
-			a[i] = s.first();
-			}
-		if(a.length > count())
-			a[count()] = null;
-		return a;
-		}
-	else
-		return toArray();
+	return RT.seqToPassedArray(seq(), a);
 }
 
 public int size(){
@@ -247,5 +249,7 @@ public boolean addAll(int index, Collection c){
 	throw new UnsupportedOperationException();
 }
 
-
+synchronized public boolean isRealized(){
+	return fn == null;
+}
 }

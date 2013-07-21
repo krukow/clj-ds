@@ -28,11 +28,11 @@ abstract class ATransientMap<K,V> extends AFn implements ITransientMap<K,V>{
 		return assoc(o.getKey(), o.getValue());
 	}
 
-	public final Object invoke(Object arg1) throws Exception{
+	public final Object invoke(Object arg1) {
 		return valAt((K) arg1);
 	}
 
-	public final Object invoke(Object arg1, Object notFound) throws Exception{
+	public final Object invoke(Object arg1, Object notFound) {
 		return valAt((K)arg1, (V) notFound);
 	}
 

@@ -16,5 +16,5 @@ public interface IChunk<T> extends Indexed<T>{
 
 IChunk<T> dropFirst();
 
-Object reduce(IFn f, Object start) throws Exception;
+Object reduce(IFn f, Object start);
 }

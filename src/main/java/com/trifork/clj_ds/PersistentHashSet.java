@@ -115,7 +115,7 @@ public Iterator<T> iterator(){
 }
 
 
-public IPersistentSet<T> disjoin(T key) throws Exception{
+public IPersistentSet<T> disjoin(T key) {
 	if(contains(key))
 		return new PersistentHashSet<T>(meta(),impl.without(key));
 	return this;

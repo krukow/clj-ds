@@ -650,7 +650,7 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> implemen
 	}
 
 	@Override
-	public IPersistentSet disjoin(Object key) throws Exception {
+	public IPersistentSet disjoin(Object key) {
 		throw new UnsupportedOperationException();
 	}
 

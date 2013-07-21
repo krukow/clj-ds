@@ -13,19 +13,17 @@ package com.trifork.clj_ds;
 import java.io.Serializable;
 import java.util.*;
 
-public abstract class ASeq<T> extends Obj implements ISeq<T>, List<T>, Serializable {
+public abstract class ASeq<T> extends Obj implements ISeq<T>, Sequential, List<T>, Serializable, IHashEq {
 transient int _hash = -1;
+transient int _hasheq = -1;
 
-
+public String toString(){
+	return RT.printString(this);
+}
 
 @Override
 public IPersistentCollection<T> empty() {
 	return PersistentList.emptyList();
-}
-
-
-public String toString(){
-	return RT.printString(this);
 }
 
 
@@ -78,15 +76,27 @@ public int hashCode(){
 	return _hash;
 }
 
+public int hasheq(){
+	if(_hasheq == -1)
+		{
+		int hash = 1;
+		for(ISeq s = seq(); s != null; s = s.next())
+			{
+			hash = 31 * hash + Util.hasheq(s.first());
+			}
+		this._hasheq = hash;
+		}
+	return _hasheq;
+}
 
-//public Object reduce(IFn f) throws Exception{
+//public Object reduce(IFn f) {
 //	Object ret = first();
 //	for(ISeq s = rest(); s != null; s = s.rest())
 //		ret = f.invoke(ret, s.first());
 //	return ret;
 //}
 //
-//public Object reduce(IFn f, Object start) throws Exception{
+//public Object reduce(IFn f, Object start) {
 //	Object ret = f.invoke(start, first());
 //	for(ISeq s = rest(); s != null; s = s.rest())
 //		ret = f.invoke(ret, s.first());
@@ -171,19 +181,7 @@ public boolean containsAll(Collection c){
 }
 
 public Object[] toArray(Object[] a){
-	if(a.length >= count())
-		{
-		ISeq s = seq();
-		for(int i = 0; s != null; ++i, s = s.next())
-			{
-			a[i] = s.first();
-			}
-		if(a.length > count())
-			a[count()] = null;
-		return a;
-		}
-	else
-		return toArray();
+	return RT.seqToPassedArray(seq(), a);
 }
 
 public int size(){

@@ -16,22 +16,25 @@ import java.util.Iterator;
 /**
  * conses onto rear, peeks/pops from front
  * See Okasaki's Batched Queues
- * This differs in that it uses a PersistentArrayList as the rear, which is in-order,
+ * This differs in that it uses a PersistentVector as the rear, which is in-order,
  * so no reversing or suspensions required for persistent use
  */
 
-public class PersistentQueue<T> extends Obj implements IPersistentList<T>, Collection<T>{
+public class PersistentQueue<T> extends Obj implements IPersistentList<T>, Collection<T>, Counted, IHashEq{
 
-final public static PersistentQueue EMPTY = new PersistentQueue(null, null, null);
+final public static PersistentQueue EMPTY = new PersistentQueue(null, 0, null, null);
 
 //*
+final int cnt;
 final ISeq f;
 final PersistentVector r;
 //static final int INITIAL_REAR_SIZE = 4;
 int _hash = -1;
+int _hasheq = -1;
 
-PersistentQueue(IPersistentMap meta, ISeq f, PersistentVector r){
+PersistentQueue(IPersistentMap meta, int cnt, ISeq f, PersistentVector r){
 	super(meta);
+	this.cnt = cnt;
 	this.f = f;
 	this.r = r;
 }
@@ -67,14 +70,27 @@ public boolean equals(Object obj){
 public int hashCode(){
 	if(_hash == -1)
 		{
-		int hash = 0;
+		int hash = 1;
 		for(ISeq s = seq(); s != null; s = s.next())
 			{
-			hash = Util.hashCombine(hash, Util.hash(s.first()));
+			hash = 31 * hash + (s.first() == null ? 0 : s.first().hashCode());
 			}
 		this._hash = hash;
 		}
 	return _hash;
+}
+
+public int hasheq() {
+	if(_hasheq == -1)
+		{
+		int hash = 1;
+		for(ISeq s = seq(); s != null; s = s.next())
+			{
+			hash = 31 * hash + Util.hasheq(s.first());
+			}
+		this._hasheq = hash;
+		}
+    return _hasheq;
 }
 
 public T peek(){
@@ -92,11 +108,11 @@ public PersistentQueue<T> pop(){
 		f1 = RT.seq(r);
 		r1 = null;
 		}
-	return new PersistentQueue<T>(meta(), f1, r1);
+	return new PersistentQueue<T>(meta(), cnt - 1, f1, r1);
 }
 
 public int count(){
-	return RT.count(f) + RT.count(r);
+	return cnt;
 }
 
 public ISeq<T> seq(){
@@ -107,9 +123,9 @@ public ISeq<T> seq(){
 
 public PersistentQueue<T> cons(T o){
 	if(f == null)     //empty
-		return new PersistentQueue<T>(meta(), RT.list(o), null);
+		return new PersistentQueue<T>(meta(), cnt + 1, RT.list(o), null);
 	else
-		return new PersistentQueue<T>(meta(), f, (r != null ? r : PersistentVector.EMPTY).cons(o));
+		return new PersistentQueue<T>(meta(), cnt + 1, f, (r != null ? r : PersistentVector.EMPTY).cons(o));
 }
 
 public IPersistentCollection<T> empty(){
@@ -117,7 +133,7 @@ public IPersistentCollection<T> empty(){
 }
 
 public PersistentQueue<T> withMeta(IPersistentMap meta){
-	return new PersistentQueue<T>(meta, f, r);
+	return new PersistentQueue<T>(meta, cnt, f, r);
 }
 
 static class Seq<T> extends ASeq<T>{
@@ -201,19 +217,7 @@ public boolean containsAll(Collection<?> c){
 }
 
 public Object[] toArray(Object[] a){
-	if(a.length >= count())
-		{
-		ISeq s = seq();
-		for(int i = 0; s != null; ++i, s = s.next())
-			{
-			a[i] = s.first();
-			}
-		if(a.length >= count())
-			a[count()] = null;
-		return a;
-		}
-	else
-		return toArray();
+	return RT.seqToPassedArray(seq(), a);
 }
 
 public int size(){

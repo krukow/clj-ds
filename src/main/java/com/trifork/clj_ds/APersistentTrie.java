@@ -23,7 +23,7 @@ public abstract class APersistentTrie<T> extends AFn implements IPersistentTrie<
 									IPersistentSet, Collection<Map.Entry<String, T>>, Set<Map.Entry<String, T>>, Serializable {
 int _hash = -1;
 
-public Object invoke(Object arg1) throws Exception{
+public Object invoke(Object arg1) {
 	return get((String) arg1);
 }
 

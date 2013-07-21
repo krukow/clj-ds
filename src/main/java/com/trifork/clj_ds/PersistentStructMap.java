@@ -93,10 +93,10 @@ static public <K,V> IFn getAccessor(final Def def, K key){
 		{
 		final int i = e.getValue();
 		return new AFn(){
-			public Object invoke(Object arg1) throws Exception{
+			public Object invoke(Object arg1) {
 				PersistentStructMap<K,V> m = (PersistentStructMap<K,V>) arg1;
 				if(m.def != def)
-					throw new Exception("Accessor/struct mismatch");
+					throw Util.runtimeException("Accessor/struct mismatch");
 				return m.vals[i];
 			}
 		};
@@ -176,16 +176,16 @@ public V valAt(K key, V notFound){
 	return ext.valAt(key, notFound);
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) {
 	if(containsKey(key))
-		throw new Exception("Key already present");
+		throw Util.runtimeException("Key already present");
 	return assoc(key, val);
 }
 
-public IPersistentMap<K,V> without(K key) throws Exception{
+public IPersistentMap<K,V> without(K key) {
 	Map.Entry e = def.keyslots.entryAt(key);
 	if(e != null)
-		throw new Exception("Can't remove struct key");
+		throw Util.runtimeException("Can't remove struct key");
 	IPersistentMap<K,V> newExt = ext.without(key);
 	if(newExt == ext)
 		return this;

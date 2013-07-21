@@ -22,20 +22,20 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 public class RT {
 
-	static final public Boolean T = Boolean.TRUE;// Keyword.intern(Symbol.create(null,
-													// "t"));
-	static final public Boolean F = Boolean.FALSE;// Keyword.intern(Symbol.create(null,
-													// "t"));
+	static final public Boolean T = Boolean.TRUE;// Keyword.intern(Symbol.create(null, "t"));
+	static final public Boolean F = Boolean.FALSE;// Keyword.intern(Symbol.create(null, "t"));
 	// single instance of UTF-8 Charset, so as to avoid catching
 	// UnsupportedCharsetExceptions everywhere
 	static public Charset UTF8 = Charset.forName("UTF-8");
@@ -46,15 +46,13 @@ public class RT {
 	static public final Object[] EMPTY_ARRAY = new Object[] {};
 	static public final Comparator DEFAULT_COMPARATOR = new DefaultComparator();
 
-	private static final class DefaultComparator implements Comparator,
-			Serializable {
+	private static final class DefaultComparator implements Comparator, Serializable {
 		public int compare(Object o1, Object o2) {
 			return Util.compare(o1, o2);
 		}
 
 		private Object readResolve() throws ObjectStreamException {
-			// ensures that we aren't hanging onto a new default comparator for
-			// every
+			// ensures that we aren't hanging onto a new default comparator for every
 			// sorted set, etc., we deserialize
 			return DEFAULT_COMPARATOR;
 		}
@@ -85,9 +83,12 @@ public class RT {
 		else {
 			Class c = coll.getClass();
 			Class sc = c.getSuperclass();
-			throw new IllegalArgumentException(
-					"Don't know how to create ISeq from: " + c.getName());
+			throw new IllegalArgumentException("Don't know how to create ISeq from: " + c.getName());
 		}
+	}
+	
+	static public Object seqOrElse(Object o) {
+		return seq(o) == null ? null : o;
 	}
 
 	static public ISeq keys(Object coll) {
@@ -132,9 +133,7 @@ public class RT {
 		else if (o.getClass().isArray())
 			return Array.getLength(o);
 
-		throw new UnsupportedOperationException(
-				"count not supported on this type: "
-						+ o.getClass().getSimpleName());
+		throw new UnsupportedOperationException("count not supported on this type: " + o.getClass().getSimpleName());
 	}
 
 	static public IPersistentCollection conj(IPersistentCollection coll,
@@ -193,22 +192,22 @@ public class RT {
 		return seq.more();
 	}
 
-	// static public Seqable more(Object x){
-	// Seqable ret = null;
-	// if(x instanceof ISeq)
-	// ret = ((ISeq) x).more();
-	// else
-	// {
-	// ISeq seq = seq(x);
-	// if(seq == null)
-	// ret = PersistentList.EMPTY;
-	// else
-	// ret = seq.more();
-	// }
-	// if(ret == null)
-	// ret = PersistentList.EMPTY;
-	// return ret;
-	// }
+//static public Seqable more(Object x){
+//  Seqable ret = null;
+//	if(x instanceof ISeq)
+//		ret = ((ISeq) x).more();
+//  else
+//      {
+//	    ISeq seq = seq(x);
+//	    if(seq == null)
+//		    ret = PersistentList.EMPTY;
+//	    else
+//          ret = seq.more();
+//      }
+//  if(ret == null)
+//      ret = PersistentList.EMPTY;
+//  return ret;
+//}
 
 	static public Object peek(Object x) {
 		if (x == null)
@@ -237,8 +236,7 @@ public class RT {
 		} else if (coll instanceof IPersistentSet) {
 			IPersistentSet set = (IPersistentSet) coll;
 			return set.get(key);
-		} else if (key instanceof Number
-				&& (coll instanceof String || coll.getClass().isArray())) {
+		} else if (key instanceof Number && (coll instanceof String || coll.getClass().isArray())) {
 			int n = ((Number) key).intValue();
 			if (n >= 0 && n < count(coll))
 				return nth(coll, n);
@@ -292,12 +290,16 @@ public class RT {
 		else if (coll instanceof Map) {
 			Map m = (Map) coll;
 			return m.containsKey(key) ? T : F;
-		} else if (key instanceof Number
-				&& (coll instanceof String || coll.getClass().isArray())) {
+		}
+		else if(coll instanceof Set) {
+			Set s = (Set) coll;
+			return s.contains(key) ? T : F;
+		}
+		else if (key instanceof Number && (coll instanceof String || coll.getClass().isArray())) {
 			int n = ((Number) key).intValue();
 			return n >= 0 && n < count(coll);
 		}
-		return F;
+		throw new IllegalArgumentException("contains? not supported on type: " + coll.getClass().getName());
 	}
 
 	static public Object find(Object coll, Object key) {
@@ -332,7 +334,7 @@ public class RT {
 		else if (coll instanceof CharSequence)
 			return Character.valueOf(((CharSequence) coll).charAt(n));
 		else if (coll.getClass().isArray())
-			return Reflector.prepRet(Array.get(coll, n));
+			return Reflector.prepRet(coll.getClass().getComponentType(),Array.get(coll, n));
 		else if (coll instanceof RandomAccess)
 			return ((List) coll).get(n);
 		else if (coll instanceof Matcher)
@@ -356,9 +358,7 @@ public class RT {
 			}
 			throw new IndexOutOfBoundsException();
 		} else
-			throw new UnsupportedOperationException(
-					"nth not supported on this type: "
-							+ coll.getClass().getSimpleName());
+			throw new UnsupportedOperationException("nth not supported on this type: " + coll.getClass().getSimpleName());
 	}
 
 	static public Object nth(Object coll, int n, Object notFound) {
@@ -382,7 +382,7 @@ public class RT {
 			return notFound;
 		} else if (coll.getClass().isArray()) {
 			if (n < Array.getLength(coll))
-				return Reflector.prepRet(Array.get(coll, n));
+				return Reflector.prepRet(coll.getClass().getComponentType(), Array.get(coll, n));
 			return notFound;
 		} else if (coll instanceof RandomAccess) {
 			List list = (List) coll;
@@ -484,35 +484,159 @@ public class RT {
 		return (char) n;
 	}
 
+	static public char charCast(byte x){
+	    char i = (char) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for char: " + x);
+	    return i;
+	}
+
+	static public char charCast(short x){
+	    char i = (char) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for char: " + x);
+	    return i;
+	}
+
+	static public char charCast(char x){
+	    return x;
+	}
+
+	static public char charCast(int x){
+	    char i = (char) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for char: " + x);
+	    return i;
+	}
+
+	static public char charCast(long x){
+	    char i = (char) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for char: " + x);
+	    return i;
+	}
+
+	static public char charCast(float x){
+	    if(x >= Character.MIN_VALUE && x <= Character.MAX_VALUE)
+	        return (char) x;
+	    throw new IllegalArgumentException("Value out of range for char: " + x);
+	}
+
+	static public char charCast(double x){
+	    if(x >= Character.MIN_VALUE && x <= Character.MAX_VALUE)
+	        return (char) x;
+	    throw new IllegalArgumentException("Value out of range for char: " + x);
+	}
+
 	static public boolean booleanCast(Object x) {
 		if (x instanceof Boolean)
 			return ((Boolean) x).booleanValue();
 		return x != null;
 	}
+	
+	static public boolean booleanCast(boolean x){
+		return x;
+	}
 
-	static public byte byteCast(Object x) {
-		long n = ((Number) x).longValue();
-		if (n < Byte.MIN_VALUE || n > Byte.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for byte: "
-					+ x);
+	static public byte byteCast(Object x){
+		if(x instanceof Byte)
+			return ((Byte) x).byteValue();
+		long n = longCast(x);
+		if(n < Byte.MIN_VALUE || n > Byte.MAX_VALUE)
+			throw new IllegalArgumentException("Value out of range for byte: " + x);
 
 		return (byte) n;
 	}
 
-	static public short shortCast(Object x) {
-		long n = ((Number) x).longValue();
-		if (n < Short.MIN_VALUE || n > Short.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for short: "
-					+ x);
+	static public byte byteCast(byte x){
+	    return x;
+	}
+
+	static public byte byteCast(short x){
+	    byte i = (byte) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for byte: " + x);
+	    return i;
+	}
+
+	static public byte byteCast(int x){
+	    byte i = (byte) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for byte: " + x);
+	    return i;
+	}
+
+	static public byte byteCast(long x){
+	    byte i = (byte) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for byte: " + x);
+	    return i;
+	}
+
+	static public byte byteCast(float x){
+	    if(x >= Byte.MIN_VALUE && x <= Byte.MAX_VALUE)
+	        return (byte) x;
+	    throw new IllegalArgumentException("Value out of range for byte: " + x);
+	}
+
+	static public byte byteCast(double x){
+	    if(x >= Byte.MIN_VALUE && x <= Byte.MAX_VALUE)
+	        return (byte) x;
+	    throw new IllegalArgumentException("Value out of range for byte: " + x);
+	}
+
+	static public short shortCast(Object x){
+		if(x instanceof Short)
+			return ((Short) x).shortValue();
+		long n = longCast(x);
+		if(n < Short.MIN_VALUE || n > Short.MAX_VALUE)
+			throw new IllegalArgumentException("Value out of range for short: " + x);
 
 		return (short) n;
 	}
 
-	static public int intCast(Object x) {
-		if (x instanceof Integer)
-			return ((Integer) x).intValue();
-		if (x instanceof Number)
-			return intCast(((Number) x).longValue());
+	static public short shortCast(byte x){
+		return x;
+	}
+
+	static public short shortCast(short x){
+		return x;
+	}
+
+	static public short shortCast(int x){
+	    short i = (short) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for short: " + x);
+	    return i;
+	}
+
+	static public short shortCast(long x){
+	    short i = (short) x;
+	    if(i != x)
+	        throw new IllegalArgumentException("Value out of range for short: " + x);
+	    return i;
+	}
+
+	static public short shortCast(float x){
+	    if(x >= Short.MIN_VALUE && x <= Short.MAX_VALUE)
+	        return (short) x;
+	    throw new IllegalArgumentException("Value out of range for short: " + x);
+	}
+
+	static public short shortCast(double x){
+	    if(x >= Short.MIN_VALUE && x <= Short.MAX_VALUE)
+	        return (short) x;
+	    throw new IllegalArgumentException("Value out of range for short: " + x);
+	}
+
+	static public int intCast(Object x){
+		if(x instanceof Integer)
+			return ((Integer)x).intValue();
+		if(x instanceof Number)
+			{
+			long n = longCast(x);
+			return intCast(n);
+			}
 		return ((Character) x).charValue();
 	}
 
@@ -534,27 +658,57 @@ public class RT {
 
 	static public int intCast(float x) {
 		if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for int: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for int: " + x);
 		return (int) x;
 	}
 
 	static public int intCast(long x) {
 		if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for int: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for int: " + x);
 		return (int) x;
 	}
 
 	static public int intCast(double x) {
 		if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for int: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for int: " + x);
 		return (int) x;
 	}
 
-	static public long longCast(Object x) {
-		return ((Number) x).longValue();
+	static public long longCast(Object x){
+		if(x instanceof Integer || x instanceof Long)
+			return ((Number) x).longValue();
+		else if (x instanceof BigInt)
+			{
+			BigInt bi = (BigInt) x;
+			if(bi.bipart == null)
+				return bi.lpart;
+			else
+				throw new IllegalArgumentException("Value out of range for long: " + x);
+			}
+		else if (x instanceof BigInteger)
+			{
+			BigInteger bi = (BigInteger) x;
+			if(bi.bitLength() < 64)
+				return bi.longValue();
+			else
+				throw new IllegalArgumentException("Value out of range for long: " + x);
+			}
+		else if (x instanceof Byte || x instanceof Short)
+		    return ((Number) x).longValue();
+		else if (x instanceof Ratio)
+		    return longCast(((Ratio)x).bigIntegerValue());
+		else if (x instanceof Character)
+		    return longCast(((Character) x).charValue());
+		else
+		    return longCast(((Number)x).doubleValue());
+	}
+
+	static public long longCast(byte x){
+	    return x;
+	}
+
+	static public long longCast(short x){
+	    return x;
 	}
 
 	static public long longCast(int x) {
@@ -563,8 +717,7 @@ public class RT {
 
 	static public long longCast(float x) {
 		if (x < Long.MIN_VALUE || x > Long.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for long: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for long: " + x);
 		return (long) x;
 	}
 
@@ -574,8 +727,7 @@ public class RT {
 
 	static public long longCast(double x) {
 		if (x < Long.MIN_VALUE || x > Long.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for long: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for long: " + x);
 		return (long) x;
 	}
 
@@ -585,13 +737,20 @@ public class RT {
 
 		double n = ((Number) x).doubleValue();
 		if (n < -Float.MAX_VALUE || n > Float.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for float: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for float: " + x);
 
 		return (float) n;
 
 	}
 
+	static public float floatCast(byte x){
+	    return x;
+	}
+
+	static public float floatCast(short x){
+	    return x;
+	}
+	
 	static public float floatCast(int x) {
 		return x;
 	}
@@ -606,14 +765,21 @@ public class RT {
 
 	static public float floatCast(double x) {
 		if (x < -Float.MAX_VALUE || x > Float.MAX_VALUE)
-			throw new IllegalArgumentException("Value out of range for float: "
-					+ x);
+			throw new IllegalArgumentException("Value out of range for float: " + x);
 
 		return (float) x;
 	}
 
 	static public double doubleCast(Object x) {
 		return ((Number) x).doubleValue();
+	}
+
+	static public double doubleCast(byte x){
+	    return x;
+	}
+
+	static public double doubleCast(short x){
+	    return x;
 	}
 
 	static public double doubleCast(int x) {
@@ -702,7 +868,7 @@ public class RT {
 				rest)))));
 	}
 
-	static public ISeq arrayToList(Object[] a) throws Exception {
+	static public ISeq arrayToList(Object[] a) {
 		ISeq ret = null;
 		for (int i = a.length - 1; i >= 0; --i)
 			ret = (ISeq) cons(a[i], ret);
@@ -722,7 +888,7 @@ public class RT {
 		}
 	}
 
-	static public Object[] toArray(Object coll) throws Exception {
+	static public Object[] toArray(Object coll) {
 		if (coll == null)
 			return EMPTY_ARRAY;
 		else if (coll instanceof Object[])
@@ -744,8 +910,7 @@ public class RT {
 				ret[i] = s.first();
 			return ret;
 		} else
-			throw new Exception("Unable to convert: " + coll.getClass()
-					+ " to Object[]");
+			throw Util.runtimeException("Unable to convert: " + coll.getClass()  + " to Object[]");
 	}
 
 	static public Object[] seqToArray(ISeq seq) {
@@ -756,15 +921,53 @@ public class RT {
 		return ret;
 	}
 
-	static public Object seqToTypedArray(ISeq seq) throws Exception {
+    // supports java Collection.toArray(T[])
+    static public Object[] seqToPassedArray(ISeq seq, Object[] passed){
+        Object[] dest = passed;
+        int len = count(seq);
+        if (len > dest.length) {
+            dest = (Object[]) Array.newInstance(passed.getClass().getComponentType(), len);
+        }
+        for(int i = 0; seq != null; ++i, seq = seq.next())
+            dest[i] = seq.first();
+        if (len < passed.length) {
+            dest[len] = null;
+        }
+        return dest;
+    }
+
+	static public Object seqToTypedArray(ISeq seq) {
 		Class type = (seq != null) ? seq.first().getClass() : Object.class;
 		return seqToTypedArray(type, seq);
 	}
 
-	static public Object seqToTypedArray(Class type, ISeq seq) throws Exception {
-		Object ret = Array.newInstance(type, length(seq));
-		for (int i = 0; seq != null; ++i, seq = seq.next())
-			Array.set(ret, i, seq.first());
+	static public Object seqToTypedArray(Class type, ISeq seq) {
+	    Object ret = Array.newInstance(type, length(seq));
+	    if(type == Integer.TYPE){
+	        for(int i = 0; seq != null; ++i, seq=seq.next()){
+	            Array.set(ret, i, intCast(seq.first()));
+	        }
+	    } else if(type == Byte.TYPE) {
+	        for(int i = 0; seq != null; ++i, seq=seq.next()){
+	            Array.set(ret, i, byteCast(seq.first()));
+	        }
+	    } else if(type == Float.TYPE) {
+	        for(int i = 0; seq != null; ++i, seq=seq.next()){
+	            Array.set(ret, i, floatCast(seq.first()));
+	        }
+	    } else if(type == Short.TYPE) {
+	        for(int i = 0; seq != null; ++i, seq=seq.next()){
+	            Array.set(ret, i, shortCast(seq.first()));
+	        }
+	    } else if(type == Character.TYPE) {
+	        for(int i = 0; seq != null; ++i, seq=seq.next()){
+	            Array.set(ret, i, charCast(seq.first()));
+	        }
+	    } else {
+	        for(int i = 0; seq != null; ++i, seq=seq.next()){
+	            Array.set(ret, i, seq.first());
+	        }
+	    }
 		return ret;
 	}
 
@@ -776,7 +979,7 @@ public class RT {
 		return i;
 	}
 
-	static public int boundedLength(ISeq list, int limit) throws Exception {
+	static public int boundedLength(ISeq list, int limit) {
 		int i = 0;
 		for (ISeq c = list; c != null && i <= limit; c = c.next()) {
 			i++;
@@ -812,17 +1015,22 @@ public class RT {
 		return readRet(ret);
 	}
 
+	static public boolean isReduced(Object r){
+		return r instanceof Reduced;
+	}
+
 	static public String printString(Object x) {
 		try {
 			StringWriter sw = new StringWriter();
 			print(x, sw);
 			return sw.toString();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		}
+		catch(Exception e) {
+			throw Util.sneakyThrow(e);
 		}
 	}
 
-	static public void print(Object x, Writer w) throws Exception {
+	static public void print(Object x, Writer w) throws IOException {
 
 		if (x instanceof Obj) {
 			Obj o = (Obj) x;
@@ -938,13 +1146,20 @@ public class RT {
 		} else if (x instanceof BigDecimal && readably) {
 			w.write(x.toString());
 			w.write('M');
+		}
+		else if(x instanceof BigInt && readably) {
+				w.write(x.toString());
+				w.write('N');
+		} else if(x instanceof BigInteger && readably) {
+				w.write(x.toString());
+				w.write("BIGINT");
 		} else
 			w.write(x.toString());
 	}
 
 	// */
 
-	private static void printInnerSeq(ISeq x, Writer w) throws Exception {
+	private static void printInnerSeq(ISeq x, Writer w) throws IOException {
 		for (ISeq s = x; s != null; s = s.next()) {
 			print(s.first(), w);
 			if (s.next() != null)
@@ -992,8 +1207,7 @@ public class RT {
 			w.write(obj.toString());
 	}
 
-	static public Object format(Object o, String s, Object... args)
-			throws Exception {
+	static public Object format(Object o, String s, Object... args) throws IOException {
 		Writer w;
 		if (o == null)
 			w = new StringWriter();
@@ -1007,7 +1221,7 @@ public class RT {
 		return null;
 	}
 
-	static public ISeq doFormat(Writer w, String s, ISeq args) throws Exception {
+	static public ISeq doFormat(Writer w, String s, ISeq args) throws IOException {
 		for (int i = 0; i < s.length();) {
 			char c = s.charAt(i++);
 			switch (Character.toLowerCase(c)) {

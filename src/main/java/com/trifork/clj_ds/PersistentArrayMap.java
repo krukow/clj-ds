@@ -75,6 +75,68 @@ static public <K,V> PersistentArrayMap<K,V> createWithCheck(Object[] init){
 	return new PersistentArrayMap<K,V>(init);
 }
 
+static public <K, V> PersistentArrayMap<K, V> createAsIfByAssoc(Object[] init){
+	// If this looks like it is doing busy-work, it is because it
+	// is achieving these goals: O(n^2) run time like
+	// createWithCheck(), never modify init arg, and only
+	// allocate memory if there are duplicate keys.
+	int n = 0;
+	for(int i=0;i< init.length;i += 2)
+		{
+		boolean duplicateKey = false;
+		for(int j=0;j<i;j += 2)
+			{
+			if(equalKey(init[i],init[j]))
+				{
+				duplicateKey = true;
+				break;
+				}
+			}
+		if(!duplicateKey)
+			n += 2;
+		}
+	if(n < init.length)
+		{
+		// Create a new shorter array with unique keys, and
+		// the last value associated with each key.  To behave
+		// like assoc, the first occurrence of each key must
+		// be used, since its metadata may be different than
+		// later equal keys.
+		Object[] nodups = new Object[n];
+		int m = 0;
+		for(int i=0;i< init.length;i += 2)
+			{
+			boolean duplicateKey = false;
+			for(int j=0;j<m;j += 2)
+				{
+				if(equalKey(init[i],nodups[j]))
+					{
+					duplicateKey = true;
+					break;
+					}
+				}
+			if(!duplicateKey)
+				{
+				int j;
+				for (j=init.length-2; j>=i; j -= 2)
+					{
+					if(equalKey(init[i],init[j]))
+						{
+						break;
+						}
+					}
+				nodups[m] = init[i];
+				nodups[m+1] = init[j+1];
+				m += 2;
+				}
+			}
+		if (m != n)
+			throw new IllegalArgumentException("Internal error: m=" + m);
+		init = nodups;
+		}
+	return new PersistentArrayMap<K, V>(init);
+}
+
 /**
  * This ctor captures/aliases the passed array, so do not modify later
  *
@@ -106,12 +168,12 @@ public IMapEntry<K,V> entryAt(K key){
 	return null;
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) throws Exception{
+public IPersistentMap<K,V> assocEx(K key, V val) {
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0)
 		{
-		throw new Exception("Key already present");
+		throw Util.runtimeException("Key already present");
 		}
 	else //didn't have key, grow
 		{
@@ -191,19 +253,22 @@ public int capacity(){
 	return count();
 }
 
-private int indexOf(Object key){
-	for(int i = 0; i < array.length; i += 2)
-		{
-		if(equalKey(array[i], key))
-			return i;
-		}
+private int indexOfObject(Object key){
+    Util.EquivPred ep = Util.equivPred(key);
+    for(int i = 0; i < array.length; i += 2)
+        {
+        if(ep.equiv(key, array[i]))
+            return i;
+        }
 	return -1;
 }
 
+private int indexOf(Object key){
+    return indexOfObject(key);
+}
+
 static boolean equalKey(Object k1, Object k2){
-	if(k1 == null)
-		return k2 == null;
-	return k1.equals(k2);
+	return Util.equiv(k1, k2);
 }
 
 public Iterator<Map.Entry<K, V>> iterator(){
@@ -291,6 +356,15 @@ static class Iter implements Iterator{
 		throw new UnsupportedOperationException();
 	}
 
+}
+
+public Object kvreduce(IFn f, Object init){
+    for(int i=0;i < array.length;i+=2){
+        init = f.invoke(init, array[i], array[i+1]);
+	    if(RT.isReduced(init))
+		    return ((IDeref)init).deref();
+        }
+    return init;
 }
 
 static class RevIter implements Iterator{

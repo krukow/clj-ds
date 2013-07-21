@@ -13,7 +13,7 @@
 package com.trifork.clj_ds;
 
 public interface ITransientSet<T> extends ITransientCollection<T>, Counted{
-	public ITransientSet<T> disjoin(T key) throws Exception;
+	public ITransientSet<T> disjoin(T key) ;
 	public boolean contains(T key);
 	public Boolean get(T key);
 }

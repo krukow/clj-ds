@@ -17,8 +17,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class APersistentSet<T> extends AFn implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable {
+public abstract class APersistentSet<T> extends AFn implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable, IHashEq {
 int _hash = -1;
+int _hasheq = -1;
 final IPersistentMap impl;
 
 protected APersistentSet(IPersistentMap<T, Boolean> impl){
@@ -45,7 +46,7 @@ public ISeq<T> seq(){
 	return RT.keys(impl);
 }
 
-public Object invoke(Object arg1) throws Exception{
+public Object invoke(Object arg1) {
 	return get((T) arg1);
 }
 
@@ -55,7 +56,7 @@ public boolean equals(Object obj){
 		return false;
 	Set m = (Set) obj;
 
-	if(m.size() != count() || m.hashCode() != hashCode())
+	if(m.size() != count())
 		return false;
 
 	for(Object aM : m)
@@ -63,11 +64,6 @@ public boolean equals(Object obj){
 		if(!contains(aM))
 			return false;
 		}
-//	for(ISeq s = seq(); s != null; s = s.rest())
-//		{
-//		if(!m.contains(s.first()))
-//			return false;
-//		}
 
 	return true;
 }
@@ -90,6 +86,19 @@ public int hashCode(){
 		this._hash = hash;
 		}
 	return _hash;
+}
+
+public int hasheq(){
+	if(_hasheq == -1){
+		int hash = 0;
+		for(ISeq s = seq(); s != null; s = s.next())
+			{
+			Object e = s.first();
+			hash +=  Util.hasheq(e);
+			}
+		this._hasheq = hash;		
+	}
+	return _hasheq;		
 }
 
 public Object[] toArray(){
@@ -130,19 +139,7 @@ public boolean containsAll(Collection c){
 }
 
 public Object[] toArray(Object[] a){
-	if(a.length >= count())
-		{
-		ISeq s = seq();
-		for(int i = 0; s != null; ++i, s = s.next())
-			{
-			a[i] = s.first();
-			}
-		if(a.length > count())
-			a[count()] = null;
-		return a;
-		}
-	else
-		return toArray();
+	return RT.seqToPassedArray(seq(), a);
 }
 
 public int size(){

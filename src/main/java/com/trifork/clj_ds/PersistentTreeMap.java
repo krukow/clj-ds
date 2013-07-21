@@ -95,16 +95,13 @@ static public <K,V> PersistentTreeMap<K,V> create(Comparator<K> comp, ISeq items
 public boolean containsKey(Object key){
 	return entryAt((K) key) != null;
 }
-public Object entryKey(Object entry){
-	return ((IMapEntry) entry).key();
-}
 
-public PersistentTreeMap<K,V> assocEx(K key, V val) throws Exception{
+public PersistentTreeMap<K,V> assocEx(K key, V val) {
 	Box found = new Box(null);
 	Node t = add(tree, key, val, found);
 	if(t == null)   //null == already contains key
 		{
-		throw new Exception("Key already present");
+		throw Util.runtimeException("Key already present");
 		}
 	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1, meta());
 }
@@ -146,7 +143,7 @@ public IPersistentCollection empty(){
 	return new PersistentTreeMap(meta(), comp);	
 }
 
-public ISeq rseq() throws Exception{
+public ISeq rseq() {
 	if(_count > 0)
 		return Seq.create(tree, false, _count);
 	return null;
@@ -156,6 +153,9 @@ public Comparator<K> comparator(){
 	return comp;
 }
 
+public Object entryKey(Object entry){
+	return ((IMapEntry) entry).key();
+}
 
 public ISeq seq(boolean ascending){
 	if(_count > 0)
@@ -209,6 +209,14 @@ public NodeIterator iterator(){
 
 public Iterator<Map.Entry<K, V>> iteratorFrom(K key) {
 	return new SeqIterator<Map.Entry<K, V>>(seqFrom(key, true));
+}
+
+public Object kvreduce(IFn f, Object init){
+    if(tree != null)
+        init = tree.kvreduce(f,init);
+    if(RT.isReduced(init))
+        init = ((IDeref)init).deref();
+    return init;
 }
 
 public NodeIterator reverseIterator(){
@@ -534,6 +542,22 @@ static abstract class Node extends AMapEntry{
 	}
 
 	abstract Node replace(Object key, Object val, Node left, Node right);
+
+    public Object kvreduce(IFn f, Object init){
+	    if(left() != null){
+            init = left().kvreduce(f, init);
+	        if(RT.isReduced(init))
+		        return init;
+	        }
+	    init = f.invoke(init, key(), val());
+	    if(RT.isReduced(init))
+		    return init;
+
+	    if(right() != null){
+            init = right().kvreduce(f, init);
+	        }
+	    return init;
+    }
 
 }
 

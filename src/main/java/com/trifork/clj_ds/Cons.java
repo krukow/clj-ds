@@ -13,7 +13,6 @@
 package com.trifork.clj_ds;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 final public class Cons<T> extends ASeq<T> implements Serializable {
 

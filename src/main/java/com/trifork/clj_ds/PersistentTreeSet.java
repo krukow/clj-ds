@@ -42,7 +42,7 @@ PersistentTreeSet(IPersistentMap meta, IPersistentMap impl){
 	this._meta = meta;
 }
 
-public IPersistentSet<T> disjoin(T key) throws Exception{
+public IPersistentSet<T> disjoin(T key) {
 	if(contains(key))
 		return new PersistentTreeSet<T>(meta(),impl.without(key));
 	return this;
@@ -58,7 +58,7 @@ public IPersistentCollection<T> empty(){
 	return new PersistentTreeSet<T>(meta(),(PersistentTreeMap)impl.empty());
 }
 
-public ISeq<T> rseq() throws Exception{
+public ISeq<T> rseq() {
 	return APersistentMap.KeySeq.create(((Reversible) impl).rseq());
 }
 

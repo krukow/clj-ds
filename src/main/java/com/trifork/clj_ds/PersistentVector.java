@@ -256,6 +256,47 @@ public ISeq<T> seq(){
 	return chunkedSeq();
 }
 
+Iterator<T> rangedIterator(final int start, final int end){
+	return new Iterator<T>(){
+		int i = start;
+		int base = i - (i%32);
+		Object[] array = (start < count())?arrayFor(i):null;
+
+		public boolean hasNext(){
+			return i < end;
+			}
+
+		public T next(){
+			if(i-base == 32){
+				array = arrayFor(i);
+				base += 32;
+				}
+			return (T) array[i++ & 0x01f];
+			}
+
+		public void remove(){
+			throw new UnsupportedOperationException();
+		}
+	};
+}
+
+public Iterator iterator151(){return rangedIterator(0,count());}
+
+public Object kvreduce(IFn f, Object init){
+    int step = 0;
+    for(int i=0;i<cnt;i+=step){
+        Object[] array = arrayFor(i);
+        for(int j =0;j<array.length;++j){
+            init = f.invoke(init,j+i,array[j]);
+            if(RT.isReduced(init))
+	            return ((IDeref)init).deref();
+            }
+        step = array.length;
+    }
+    return init;
+}
+
+
 final static class PersistentVectorIterator<T> implements Iterator<T> {
 	PersistentVector<T> vec;
 	int sft;
@@ -373,7 +414,7 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 		this.offset = offset;
 	}
 
-	public IChunk<T> chunkedFirst() throws Exception{
+	public IChunk<T> chunkedFirst() {
 		return new ArrayChunk<T>(node, offset);
 		}
 
@@ -404,6 +445,10 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 		if(offset + 1 < node.length)
 			return new ChunkedSeq<T>(vec, node, i, offset + 1);
 		return chunkedNext();
+	}
+	
+	public int count(){
+		return vec.cnt - (i + offset);
 	}
 }
 
@@ -633,6 +678,19 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		throw new IndexOutOfBoundsException();
 	}
 
+	private Object[] editableArrayFor(int i){
+		if(i >= 0 && i < cnt)
+			{
+			if(i >= tailoff())
+				return tail;
+			Node node = root;
+			for(int level = shift; level > 0; level -= 5)
+				node = ensureEditable((Node) node.array[(i >>> level) & 0x01f]);
+			return node.array;
+			}
+		throw new IndexOutOfBoundsException();
+	}
+
 	public Object valAt(Object key){
 		//note - relies on ensureEditable in 2-arg valAt
 		return valAt(key, null);
@@ -649,7 +707,7 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		return notFound;
 	}
 
-	public Object invoke(Object arg1) throws Exception{
+	public Object invoke(Object arg1) {
 		//note - relies on ensureEditable in nth
 		if(Util.isInteger(arg1))
 			return nth(((Number) arg1).intValue());
@@ -728,17 +786,17 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 			return this;
 			}
 
-		Object[] newtail = arrayFor(cnt - 2);
+		Object[] newtail = editableArrayFor(cnt - 2);
 
 		Node newroot = popTail(shift, root);
 		int newshift = shift;
 		if(newroot == null)
 			{
-			newroot = EMPTY_NODE;
+			newroot = new Node(root.edit);
 			}
 		if(shift > 5 && newroot.array[1] == null)
 			{
-			newroot = (Node) newroot.array[0];
+			newroot = ensureEditable((Node) newroot.array[0]);
 			newshift -= 5;
 			}
 		root = newroot;

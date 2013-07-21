@@ -200,7 +200,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> implements IObj {
 		public HATTrieNode<T> add(String s, int i, T t) {
 			String ss = s.substring(i);
 			T et = strings.get(ss);
-			if (Util.equals(et, t)) {
+			if (Util.equiv(et, t)) {
 				return this;
 			}
 		    if (shouldBurst()) {
@@ -296,7 +296,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> implements IObj {
 	}
 
 	@Override
-	public IPersistentSet disjoin(Object key) throws Exception {
+	public IPersistentSet disjoin(Object key) {
 		throw new UnsupportedOperationException();
 	}
 

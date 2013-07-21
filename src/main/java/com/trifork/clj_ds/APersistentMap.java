@@ -18,8 +18,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class APersistentMap<K,V> extends AFn implements IPersistentMap<K,V>, Map<K,V>, Iterable<Map.Entry<K, V>>, Serializable {
+public abstract class APersistentMap<K,V> extends AFn implements IPersistentMap<K,V>, Map<K,V>, Iterable<Map.Entry<K, V>>, Serializable, IHashEq {
 int _hash = -1;
+int _hasheq = -1;
 
 public String toString(){
 	return RT.printString(this);
@@ -35,7 +36,7 @@ public boolean equals(Object obj){
 		return false;
 	Map m = (Map) obj;
 
-	if(m.size() != size() || m.hashCode() != hashCode())
+	if(m.size() != size())
 		return false;
 
 	for(ISeq s = seq(); s != null; s = s.next())
@@ -72,18 +73,31 @@ public boolean equiv(Object obj){
 public int hashCode(){
 	if(_hash == -1)
 		{
-		//int hash = count();
 		int hash = 0;
 		for(ISeq s = seq(); s != null; s = s.next())
 			{
 			Map.Entry e = (Map.Entry) s.first();
 			hash += (e.getKey() == null ? 0 : e.getKey().hashCode()) ^
 			        (e.getValue() == null ? 0 : e.getValue().hashCode());
-			//hash ^= Util.hashCombine(Util.hash(e.getKey()), Util.hash(e.getValue()));
 			}
 		this._hash = hash;
 		}
 	return _hash;
+}
+
+public int hasheq(){
+	if(_hasheq == -1)
+		{
+		int hash = 0;
+		for(ISeq s = seq(); s != null; s = s.next())
+			{
+			Map.Entry e = (Map.Entry) s.first();
+			hash += Util.hasheq(e.getKey()) ^
+					Util.hasheq(e.getValue());
+			}
+		this._hasheq = hash;
+		}
+	return _hasheq;
 }
 
 static public class KeySeq extends ASeq{
@@ -149,11 +163,11 @@ static public class ValSeq extends ASeq{
 }
 
 
-public Object invoke(Object arg1) throws Exception{
+public Object invoke(Object arg1) {
 	return valAt((K) arg1);
 }
 
-public Object invoke(Object arg1, Object notFound) throws Exception{
+public Object invoke(Object arg1, Object notFound) {
 	return valAt((K) arg1, (V) notFound);
 }
 

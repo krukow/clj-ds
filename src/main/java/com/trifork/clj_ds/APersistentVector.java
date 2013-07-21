@@ -22,8 +22,9 @@ import java.util.RandomAccess;
 public abstract class APersistentVector<T> extends AFn implements IPersistentVector<T>, Iterable<T>,
                                                                List<T>,
                                                                RandomAccess, Comparable<T>,
-                                                               Serializable {
+                                                               Serializable, IHashEq {
 int _hash = -1;
+int _hasheq = -1;
 
 public String toString(){
 	return RT.printString(this);
@@ -156,6 +157,20 @@ public int hashCode(){
 	return _hash;
 }
 
+public int hasheq(){
+	if(_hasheq == -1) {
+	int hash = 1;
+	Iterator i = iterator();
+	while(i.hasNext())
+		{
+		Object obj = i.next();
+		hash = 31 * hash + Util.hasheq(obj);
+		}
+	_hasheq = hash;
+	}
+	return _hasheq;
+}
+
 public T get(int index){
 	return nth(index);
 }
@@ -249,7 +264,7 @@ public boolean addAll(int i, Collection c){
 }
 
 
-public Object invoke(Object arg1) throws Exception{
+public Object invoke(Object arg1) {
 	if(Util.isInteger(arg1))
 		return nth(((Number) arg1).intValue());
 	throw new IllegalArgumentException("Key must be integer");
@@ -360,19 +375,7 @@ public boolean containsAll(Collection c){
 }
 
 public Object[] toArray(Object[] a){
-	if(a.length >= count())
-		{
-		ISeq s = seq();
-		for(int i = 0; s != null; ++i, s = s.next())
-			{
-			a[i] = s.first();
-			}
-		if(a.length > count())
-			a[count()] = null;
-		return a;
-		}
-	else
-		return toArray();
+	return RT.seqToPassedArray(seq(), a);
 }
 
 public int size(){
@@ -450,14 +453,14 @@ public int compareTo(Object o){
 		return new APersistentVector.Seq<T>(meta, v, i);
 	}
 
-	public Object reduce(IFn f) throws Exception{
+	public Object reduce(IFn f) {
 		Object ret = v.nth(i);
 		for(int x = i + 1; x < v.count(); x++)
 			ret = f.invoke(ret, v.nth(x));
 		return ret;
 	}
 
-	public Object reduce(IFn f, Object start) throws Exception{
+	public Object reduce(IFn f, Object start) {
 		Object ret = f.invoke(start, v.nth(i));
 		for(int x = i + 1; x < v.count(); x++)
 			ret = f.invoke(ret, v.nth(x));
@@ -504,9 +507,9 @@ public static class RSeq<T> extends ASeq<T> implements IndexedSeq<T>, Counted{
 }
 
 static class SubVector<T> extends APersistentVector<T> implements IObj{
-	final IPersistentVector<T> v;
-	final int start;
-	final int end;
+	public final IPersistentVector<T> v;
+	public final int start;
+	public final int end;
 	final IPersistentMap _meta;
 
 
@@ -526,6 +529,8 @@ static class SubVector<T> extends APersistentVector<T> implements IObj{
 		this.start = start;
 		this.end = end;
 	}
+	
+	public Iterator<T> iterator(){return ((PersistentVector<T>)v).rangedIterator(start,end);}
 
 	public T nth(int i){
 		if(start + i >= end)

@@ -8,16 +8,10 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-/* rich May 24, 2009 */
+/* rich Feb 9, 2009 */
 
 package com.trifork.clj_ds;
 
-public interface IChunkedSeq<T> extends ISeq<T>, Sequential{
-
-IChunk<T> chunkedFirst() ;
-
-ISeq<T> chunkedNext() ;
-
-ISeq<T> chunkedMore() ;
-
+public interface IDeref{
+Object deref() ;
 }

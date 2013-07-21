@@ -8,16 +8,25 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-/* rich May 24, 2009 */
-
 package com.trifork.clj_ds;
 
-public interface IChunkedSeq<T> extends ISeq<T>, Sequential{
+/**
+ * @since 1.3
+ */
+public class ArityException extends IllegalArgumentException {
 
-IChunk<T> chunkedFirst() ;
+	final public int actual;
 
-ISeq<T> chunkedNext() ;
+	final public String name;
 
-ISeq<T> chunkedMore() ;
+	public ArityException(int actual, String name) {
+		this(actual, name, null);
+	}
+
+	public ArityException(int actual, String name, Throwable cause) {
+		super("Wrong number of args (" + actual + ") passed to: " + name, cause);
+		this.actual = actual;
+		this.name = name;
+	}
 
 }

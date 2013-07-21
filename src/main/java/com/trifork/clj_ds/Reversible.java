@@ -13,5 +13,5 @@
 package com.trifork.clj_ds;
 
 public interface Reversible<T>{
-ISeq<T> rseq() throws Exception;
+ISeq<T> rseq() ;
 }

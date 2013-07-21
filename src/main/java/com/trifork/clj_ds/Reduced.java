@@ -8,16 +8,16 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-/* rich May 24, 2009 */
-
 package com.trifork.clj_ds;
 
-public interface IChunkedSeq<T> extends ISeq<T>, Sequential{
+public class Reduced implements IDeref{
+Object val;
 
-IChunk<T> chunkedFirst() ;
+public Reduced(Object val){
+	this.val = val;
+}
 
-ISeq<T> chunkedNext() ;
-
-ISeq<T> chunkedMore() ;
-
+public Object deref(){
+	return val;
+}
 }

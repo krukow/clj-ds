@@ -14,9 +14,17 @@ package com.trifork.clj_ds;
 
 public class Reflector {
 
-	public static Object prepRet(Object x) {
-		if (x instanceof Boolean)
-			return ((Boolean) x) ? Boolean.TRUE : Boolean.FALSE;
+	public static Object prepRet(Class c, Object x){
+		if (!(c.isPrimitive() || c == Boolean.class))
+			return x;
+		if(x instanceof Boolean)
+			return ((Boolean) x)?Boolean.TRUE:Boolean.FALSE;
+//		else if(x instanceof Integer)
+//			{
+//			return ((Integer)x).longValue();
+//			}
+//		else if(x instanceof Float)
+//				return Double.valueOf(((Float) x).doubleValue());
 		return x;
 	}
 }

@@ -10,7 +10,7 @@
 
 package com.trifork.clj_ds;
 
-public interface IndexedSeq<T> extends ISeq<T>, Counted{
+public interface IndexedSeq<T> extends ISeq<T>, Sequential, Counted{
 
 public int index();
 }
