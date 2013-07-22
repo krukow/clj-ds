@@ -155,4 +155,22 @@ static final class TransientHashSet<T> extends ATransientSet<T> {
 	}
 }
 
+	@Override
+	public PersistentSet<T> consAll(Iterable<? extends T> others) {
+		TransientHashSet<T> result = (TransientHashSet<T>) this.asTransient();
+		for (T other : others) {
+			result = (TransientHashSet<T>) result.conj(other);
+		}
+		return (PersistentSet<T>) result.persistent();
+	}
+
+	@Override
+	public PersistentSet<T> disjoinAll(Iterable<? extends T> others) {
+		TransientHashSet<T> result = (TransientHashSet<T>) this.asTransient();
+		for (T other : others) {
+			result = (TransientHashSet<T>) result.disjoin(other);
+		}
+		return (PersistentSet<T>) result.persistent();
+	}
+
 }

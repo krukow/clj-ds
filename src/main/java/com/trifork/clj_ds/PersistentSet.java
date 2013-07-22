@@ -11,5 +11,9 @@ public interface PersistentSet<E> extends IPersistentSet<E>, PersistentCollectio
 	PersistentSet<E> cons(E o);
 
 	PersistentSet<E> empty();
+	
+	PersistentSet<E> disjoinAll(Iterable<? extends E> others);
+	
+	PersistentSet<E> consAll(Iterable<? extends E> others);
 
 }

@@ -89,4 +89,23 @@ public ISeq<T> seqFrom(T key, boolean ascending){
 public IPersistentMap meta(){
 	return _meta;
 }
+
+	@Override
+	public PersistentSortedSet<T> consAll(Iterable<? extends T> others) {
+		PersistentSortedSet<T> result = this;
+		for (T other : others) {
+			result = result.cons(other);
+		}
+		return result;
+	}
+
+	@Override
+	public PersistentSortedSet<T> disjoinAll(Iterable<? extends T> others) {
+		PersistentSortedSet<T> result = this;
+		for (T other : others) {
+			result = result.disjoin(other);
+		}
+		return result;
+	}
+
 }

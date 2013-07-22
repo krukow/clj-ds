@@ -12,4 +12,6 @@ public interface PersistentList<E> extends PersistentStack<E>, List<E>, IPersist
 
 	PersistentList<E> pop();
 	
+	PersistentList<E> consAll(Iterable<? extends E> others);
+
 }

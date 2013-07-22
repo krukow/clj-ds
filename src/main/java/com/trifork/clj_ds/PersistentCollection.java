@@ -9,5 +9,7 @@ public interface PersistentCollection<E> extends IPersistentCollection<E>, Colle
 	PersistentCollection<E> cons(E o);
 
 	PersistentCollection<E> empty();
+	
+	PersistentCollection<E> consAll(Iterable<? extends E> others);
 
 }

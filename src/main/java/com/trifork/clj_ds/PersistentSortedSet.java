@@ -10,4 +10,8 @@ public interface PersistentSortedSet<E> extends PersistentSet<E>, Sorted<E> /*, 
 
 	PersistentSortedSet<E> empty();
 	
+	PersistentSortedSet<E> disjoinAll(Iterable<? extends E> others);
+	
+	PersistentSortedSet<E> consAll(Iterable<? extends E> others);
+	
 }

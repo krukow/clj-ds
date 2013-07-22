@@ -14,4 +14,6 @@ public interface PersistentVector<E> extends IPersistentVector<E>, PersistentSta
 	
 	PersistentVector<E> assocN(int i, E val);
 	
+	PersistentVector<E> consAll(Iterable<? extends E> others);
+	
 }
