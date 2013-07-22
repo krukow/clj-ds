@@ -4,12 +4,12 @@ import java.util.Set;
 
 import com.trifork.clj_lang.IPersistentSet;
 
-public interface PersistentSet<E> extends IPersistentSet<E>, Set<E> {
+public interface PersistentSet<E> extends IPersistentSet<E>, PersistentCollection<E>, Set<E> {
 
-	IPersistentSet<E> disjoin(E key);
+	PersistentSet<E> disjoin(E key);
 	
-	IPersistentSet<E> cons(E o);
+	PersistentSet<E> cons(E o);
 
-	IPersistentSet<E> empty();
+	PersistentSet<E> empty();
 
 }

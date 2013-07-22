@@ -117,13 +117,13 @@ public Iterator<T> iterator(){
 }
 
 
-public IPersistentSet<T> disjoin(T key) {
+public PersistentHashSet<T> disjoin(T key) {
 	if(contains(key))
 		return new PersistentHashSet<T>(meta(),impl.without(key));
 	return this;
 }
 
-public IPersistentSet<T> cons(T o){
+public PersistentHashSet<T> cons(T o){
 	if(contains(o))
 		return this;
 	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
