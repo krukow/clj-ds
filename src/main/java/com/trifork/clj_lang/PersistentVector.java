@@ -538,7 +538,7 @@ private Node popTail(int level, Node node){
 		}
 }
 
-static final class TransientVector<T> extends AFn implements ITransientVector<T>, Counted{
+static final class TransientVector<T> extends AFn implements ITransientVector<T>, Counted, com.trifork.clj_ds.TransientVector<T> {
 	int cnt;
 	int shift;
 	Node root;
@@ -831,7 +831,7 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 	}
 
 	@Override
-	public IPersistentCollection persistent() {
+	public PersistentVector<T> persistent() {
 		return persistentMap();
 	}
 	
