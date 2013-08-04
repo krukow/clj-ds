@@ -12,16 +12,17 @@ package com.trifork.clj_lang;
 
 import java.util.Map;
 
-import com.trifork.clj_lang.PersistentHashMap.INode;
+import com.trifork.clj_ds.PersistentMap;
+import com.trifork.clj_ds.TransientMap;
 
 
-abstract class ATransientMap<K,V> extends AFn implements ITransientMap<K,V>{
+abstract class ATransientMap<K,V> extends AFn implements ITransientMap<K,V>, TransientMap<K, V>{
 	abstract void ensureEditable();
-	abstract ITransientMap<K,V> doAssoc(K key, V val);
-	abstract ITransientMap<K,V> doWithout(K key);
+	abstract TransientMap<K,V> doAssoc(K key, V val);
+	abstract TransientMap<K,V> doWithout(K key);
 	abstract V doValAt(K key, V notFound);
 	abstract int doCount();
-	abstract IPersistentMap<K,V> doPersistent();
+	abstract PersistentMap<K,V> doPersistent();
 
 	public ITransientMap<K,V> conj(Map.Entry<K, V> o) {
 		ensureEditable();
@@ -40,17 +41,17 @@ abstract class ATransientMap<K,V> extends AFn implements ITransientMap<K,V>{
 		return valAt(key, null);
 	}
 
-	public final ITransientMap<K,V> assoc(K key, V val) {
+	public final TransientMap<K,V> assoc(K key, V val) {
 		ensureEditable();
 		return doAssoc(key, val);
 	}
 
-	public final ITransientMap<K,V> without(K key) {
+	public final TransientMap<K,V> without(K key) {
 		ensureEditable();
 		return doWithout(key);
 	}
 
-	public final IPersistentMap<K,V> persistentMap() {
+	public final PersistentMap<K,V> persistentMap() {
 		ensureEditable();
 		return doPersistent();
 	}

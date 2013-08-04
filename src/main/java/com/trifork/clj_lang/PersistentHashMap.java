@@ -347,7 +347,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 		this.nullValue = nullValue;
 	}
 
-	ITransientMap<K,V> doAssoc(K key, V val) {
+	TransientHashMap<K,V> doAssoc(K key, V val) {
 		if (key == null) {
 			if (this.nullValue != val)
 				this.nullValue = (V) val;
@@ -367,7 +367,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 		return this;
 	}
 
-	ITransientMap<K,V> doWithout(K key) {
+	TransientHashMap<K,V> doWithout(K key) {
 		if (key == null) {
 			if (!hasNull) return this;
 			hasNull = false;
@@ -385,7 +385,7 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 		return this;
 	}
 
-	IPersistentMap<K,V> doPersistent() {
+	PersistentHashMap<K,V> doPersistent() {
 		edit.set(null);
 		return new PersistentHashMap<K,V>(count, root, hasNull, nullValue);
 	}

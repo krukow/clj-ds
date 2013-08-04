@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.trifork.clj_ds.PersistentMap;
+import com.trifork.clj_ds.TransientMap;
 
 /**
  * Simple implementation of persistent map on an array
@@ -400,7 +401,7 @@ static class RevIter implements Iterator{
 }
 
 
-public ITransientMap asTransient(){
+public TransientArrayMap asTransient(){
 	return new TransientArrayMap(array);
 }
 
@@ -425,7 +426,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 		return -1;
 	}
 
-	ITransientMap<K,V> doAssoc(K key, V val){
+	TransientMap<K,V> doAssoc(K key, V val){
 		int i = indexOf(key);
 		if(i >= 0) //already have key,
 			{
@@ -442,7 +443,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 		return this;
 	}
 
-	ITransientMap<K,V> doWithout(K key) {
+	TransientArrayMap<K,V> doWithout(K key) {
 		int i = indexOf(key);
 		if(i >= 0) //have key, will remove
 			{
@@ -467,7 +468,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 		return len / 2;
 	}
 	
-	IPersistentMap<K,V> doPersistent(){
+	PersistentArrayMap<K,V> doPersistent(){
 		ensureEditable();
 		owner = null;
 		Object[] a = new Object[len];
