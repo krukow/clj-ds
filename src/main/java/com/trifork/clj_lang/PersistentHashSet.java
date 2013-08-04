@@ -137,7 +137,7 @@ public PersistentHashSet<T> withMeta(IPersistentMap meta){
 	return new PersistentHashSet<T>(meta, impl);
 }
 
-public ITransientCollection<T> asTransient() {
+public TransientHashSet<T> asTransient() {
 	return new TransientHashSet<T>(((PersistentHashMap) impl).asTransient());
 }
 
@@ -150,7 +150,7 @@ static final class TransientHashSet<T> extends ATransientSet<T> {
 		super(impl);
 	}
 
-	public IPersistentCollection<T> persistent() {
+	public PersistentHashSet<T> persistent() {
 		return new PersistentHashSet<T>(null, impl.persistentMap());
 	}
 }
