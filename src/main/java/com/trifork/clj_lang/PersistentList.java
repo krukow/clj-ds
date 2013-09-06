@@ -299,11 +299,6 @@ public Object reduce(IFn f, Object start) {
 	public boolean addAll(int index, Collection c){
 		throw new UnsupportedOperationException();
 	}
-
-		@Override
-		public com.trifork.clj_ds.PersistentList<T> plusAll(Iterable<? extends T> others) {
-			return PersistentList.consAll(this, others);
-		}
 		
 	@Override
 	public com.trifork.clj_ds.PersistentList<T> zero() {
@@ -321,11 +316,6 @@ public Object reduce(IFn f, Object start) {
 	}
 
 }
-    
-	@Override
-	public com.trifork.clj_ds.PersistentList<T> plusAll(Iterable<? extends T> others) {
-		return consAll(this, others);
-	}
 	
 	public static <T> com.trifork.clj_ds.PersistentList<T> consAll(com.trifork.clj_ds.PersistentList<T> list, Iterable<? extends T> others) {
 		for (T other : others) {

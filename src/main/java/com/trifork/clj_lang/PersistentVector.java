@@ -856,15 +856,6 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 	}
 	
 }
-
-	@Override
-	public com.trifork.clj_ds.PersistentVector<T> plusAll(Iterable<? extends T> others) {
-		TransientVector<T> result = this.asTransient();
-		for (T other : others) {
-			result = result.conj(other);
-		}
-		return (com.trifork.clj_ds.PersistentVector<T>) result.persistent();
-	}
 	
 	@Override
 	public com.trifork.clj_ds.PersistentVector<T> zero() {

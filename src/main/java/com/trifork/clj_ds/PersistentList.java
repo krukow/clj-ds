@@ -9,7 +9,5 @@ public interface PersistentList<E> extends PersistentStack<E>, List<E> {
 	PersistentList<E> plus(E val);
 
 	PersistentList<E> minus();
-	
-	PersistentList<E> plusAll(Iterable<? extends E> vals);
 
 }

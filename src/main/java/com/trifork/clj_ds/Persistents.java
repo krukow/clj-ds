@@ -11,6 +11,8 @@ import com.trifork.clj_lang.PersistentTreeSet;
 
 public final class Persistents {
 	
+	// Factory Methods
+	
 	public static <E> PersistentVector<E> vector() {
 		return com.trifork.clj_lang.PersistentVector.emptyVector();
 	}
@@ -110,6 +112,46 @@ public final class Persistents {
 	public static <E> PersistentList<E> linkedList(Iterable<? extends E> vals) {
 		return com.trifork.clj_lang.PersistentList.create(vals);
 	}
+	
+	// Utilities
+	
+	public static <E> PersistentList<E> plusAll(PersistentList<E> list, Iterable<? extends E> others) {
+		return com.trifork.clj_lang.PersistentList.consAll(list, others);
+	}
+	
+	public static <E> PersistentVector<E> plusAll(PersistentVector<E> vec, Iterable<? extends E> others) {
+		TransientVector<E> result = vec.asTransient();
+		for (E other : others) {
+			result = result.plus(other);
+		}
+		return result.persist();
+	}
+	
+	public static <E> PersistentSortedSet<E> plusAll(PersistentSortedSet<E> set, Iterable<? extends E> others) {
+		PersistentSortedSet<E> result = set;
+		for (E other : others) {
+			result = result.plus(other);
+		}
+		return result;
+	}
+
+	public static <E> PersistentSet<E> plusAll(PersistentSet<E> set, Iterable<? extends E> others) {
+		TransientSet<E> result = (TransientSet<E>) set.asTransient();
+		for (E other : others) {
+			result =  result.plus(other);
+		}
+		return result.persist();
+	}
+	
+	public static <E> PersistentSet<E> minusAll(PersistentSet<E> set, Iterable<? extends E> others) {
+		TransientSet<E> result = (TransientSet<E>) set.asTransient();
+		for (E other : others) {
+			result =  result.minus(other);
+		}
+		return result.persist();
+	}
+	
+	// Empty Constructor
 	
 	private Persistents() {
 

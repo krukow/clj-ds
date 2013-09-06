@@ -7,14 +7,10 @@ public interface PersistentVector<E> extends PersistentStack<E>, List<E>, Indexe
 	PersistentVector<E> zero();
 
 	PersistentVector<E> plus(E o);
-
-	PersistentVector<E> minus();
-	
-	PersistentVector<E> pop();
-	
-	PersistentVector<E> plusAll(Iterable<? extends E> others);
 	
 	PersistentVector<E> plusN(int i, E val);
+
+	PersistentVector<E> minus();
 	
 	TransientVector<E> asTransient();
 	

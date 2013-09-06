@@ -8,10 +8,6 @@ public interface PersistentSortedSet<E> extends PersistentSet<E>, Sorted<E> /*, 
 	
 	PersistentSortedSet<E> plus(E o);
 
-	PersistentSortedSet<E> plusAll(Iterable<? extends E> others);
-
 	PersistentSortedSet<E> minus(E key);
-
-	PersistentSortedSet<E> minusAll(Iterable<? extends E> others);
 
 }

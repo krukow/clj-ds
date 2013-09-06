@@ -7,8 +7,6 @@ public interface PersistentStack<E> extends PersistentCollection<E> {
 	PersistentStack<E> plus(E o);
 
 	PersistentStack<E> minus();
-	
-	PersistentStack<E> plusAll(Iterable<? extends E> others);
 
 	E peek();
 

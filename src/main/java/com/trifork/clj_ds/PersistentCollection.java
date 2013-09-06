@@ -8,6 +8,4 @@ public interface PersistentCollection<E> extends Collection<E> {
 	
 	PersistentCollection<E> plus(E val);
 	
-	PersistentCollection<E> plusAll(Iterable<? extends E> vals);
-	
 }
