@@ -119,6 +119,14 @@ public final class Persistents {
 		return com.trifork.clj_lang.PersistentList.consAll(list, others);
 	}
 	
+	public static <E> PersistentList<E> plusAll(PersistentList<E> list, E...others) {
+		PersistentList<E> result = list;
+		for (E other : others) {
+			result = result.plus(other);
+		}
+		return result;
+	}
+	
 	public static <E> PersistentVector<E> plusAll(PersistentVector<E> vec, Iterable<? extends E> others) {
 		TransientVector<E> result = vec.asTransient();
 		for (E other : others) {
@@ -127,15 +135,23 @@ public final class Persistents {
 		return result.persist();
 	}
 	
-	public static <E> PersistentSortedSet<E> plusAll(PersistentSortedSet<E> set, Iterable<? extends E> others) {
-		PersistentSortedSet<E> result = set;
+	public static <E> PersistentVector<E> plusAll(PersistentVector<E> vec, E... others) {
+		TransientVector<E> result = vec.asTransient();
 		for (E other : others) {
 			result = result.plus(other);
 		}
-		return result;
+		return result.persist();
 	}
 
 	public static <E> PersistentSet<E> plusAll(PersistentSet<E> set, Iterable<? extends E> others) {
+		TransientSet<E> result = (TransientSet<E>) set.asTransient();
+		for (E other : others) {
+			result =  result.plus(other);
+		}
+		return result.persist();
+	}
+	
+	public static <E> PersistentSet<E> plusAll(PersistentSet<E> set, E... others) {
 		TransientSet<E> result = (TransientSet<E>) set.asTransient();
 		for (E other : others) {
 			result =  result.plus(other);
@@ -149,6 +165,46 @@ public final class Persistents {
 			result =  result.minus(other);
 		}
 		return result.persist();
+	}
+	
+	public static <E> PersistentSet<E> minusAll(PersistentSet<E> set, E... others) {
+		TransientSet<E> result = (TransientSet<E>) set.asTransient();
+		for (E other : others) {
+			result =  result.minus(other);
+		}
+		return result.persist();
+	}
+	
+	public static <E> PersistentSortedSet<E> plusAll(PersistentSortedSet<E> set, Iterable<? extends E> others) {
+		PersistentSortedSet<E> result = set;
+		for (E other : others) {
+			result = result.plus(other);
+		}
+		return result;
+	}
+	
+	public static <E> PersistentSortedSet<E> plusAll(PersistentSortedSet<E> set, E... others) {
+		PersistentSortedSet<E> result = set;
+		for (E other : others) {
+			result = result.plus(other);
+		}
+		return result;
+	}
+	
+	public static <E> PersistentSortedSet<E> minusAll(PersistentSortedSet<E> set, Iterable<? extends E> others) {
+		PersistentSortedSet<E> result = set;
+		for (E other : others) {
+			result = result.minus(other);
+		}
+		return result;
+	}
+
+	public static <E> PersistentSortedSet<E> minusAll(PersistentSortedSet<E> set, E... others) {
+		PersistentSortedSet<E> result = set;
+		for (E other : others) {
+			result = result.minus(other);
+		}
+		return result;
 	}
 	
 	// Empty Constructor
