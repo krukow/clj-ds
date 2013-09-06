@@ -19,6 +19,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.trifork.clj_ds.PersistentMap;
+import com.trifork.clj_ds.TransientMap;
 
 /*
  A persistent rendition of Phil Bagwell's Hash Array Mapped Trie
@@ -146,7 +147,7 @@ public IMapEntry<K,V> entryAt(K key){
 	return (root != null) ? root.find(0, hash(key), key) : null;
 }
 
-public PersistentMap<K,V> assoc(K key, V val){
+public IPersistentMap<K,V> assoc(K key, V val){
 	if(key == null) {
 		if(hasNull && val == nullValue)
 			return this;
@@ -170,13 +171,13 @@ public V valAt(K key){
 	return valAt(key, null);
 }
 
-public PersistentMap<K,V> assocEx(K key, V val) {
+public IPersistentMap<K,V> assocEx(K key, V val) {
 	if(containsKey(key))
 		throw Util.runtimeException("Key already present");
 	return assoc(key, val);
 }
 
-public PersistentMap<K,V> without(K key){
+public IPersistentMap<K,V> without(K key){
 	if(key == null)
 		return hasNull ? new PersistentHashMap<K,V>(meta(), count - 1, root, false, null) : this;
 	if(root == null)
@@ -326,7 +327,7 @@ public IPersistentMap meta(){
 	return _meta;
 }
 
-static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
+static final class TransientHashMap<K,V> extends ATransientMap<K,V> implements TransientMap<K, V> {
 	AtomicReference<Thread> edit;
 	INode root;
 	int count;
@@ -417,6 +418,21 @@ static final class TransientHashMap<K,V> extends ATransientMap<K,V> {
 	public IPersistentCollection persistent() {
 		// TODO Auto-generated method stub
 		return persistentMap();
+	}
+	
+	@Override
+	public PersistentMap<K, V> persist() {
+		return (PersistentMap<K, V>) persistent();
+	}
+	
+	@Override
+	public TransientMap<K, V> plus(K key, V val) {
+		return (TransientMap<K, V>) assoc(key, val);
+	}
+	
+	@Override
+	public TransientMap<K, V> minus(K key) {
+		return (TransientMap<K, V>) without(key);
 	}
 
 }
@@ -1602,5 +1618,25 @@ static final class NodeSeq extends ASeq {
 		return create(array, i + 2, null);
 	}
 }
+
+	@Override
+	public PersistentMap<K, V> zero() {
+		return (PersistentMap<K, V>) empty();
+	}
+	
+	@Override
+	public PersistentMap<K, V> plus(K key, V val) {
+		return (PersistentMap<K, V>) assoc(key, val);
+	}
+	
+	@Override
+	public PersistentMap<K, V> plusEx(K key, V val) {
+		return (PersistentMap<K, V>) assocEx(key, val);
+	}
+	
+	@Override
+	public PersistentMap<K, V> minus(K key) {
+		return (PersistentMap<K, V>) without(key);
+	}
 
 }

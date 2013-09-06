@@ -91,21 +91,36 @@ public IPersistentMap meta(){
 }
 
 	@Override
-	public PersistentSortedSet<T> consAll(Iterable<? extends T> others) {
+	public PersistentSortedSet<T> plusAll(Iterable<? extends T> others) {
 		PersistentSortedSet<T> result = this;
 		for (T other : others) {
-			result = result.cons(other);
+			result = result.plus(other);
 		}
 		return result;
 	}
 
 	@Override
-	public PersistentSortedSet<T> disjoinAll(Iterable<? extends T> others) {
+	public PersistentSortedSet<T> minusAll(Iterable<? extends T> others) {
 		PersistentSortedSet<T> result = this;
 		for (T other : others) {
-			result = result.disjoin(other);
+			result = result.minus(other);
 		}
 		return result;
+	}
+	
+	@Override
+	public PersistentSortedSet<T> zero() {
+		return empty();
+	}
+	
+	@Override
+	public PersistentSortedSet<T> plus(T o) {
+		return cons(o);
+	}
+	
+	@Override
+	public PersistentSortedSet<T> minus(T key) {
+		return disjoin(key);
 	}
 
 }

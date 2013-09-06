@@ -1,5 +1,5 @@
 /**
- *   Copyright (c) Rich Hickey. All rights reserved.
+a *   Copyright (c) Rich Hickey. All rights reserved.
  *   The use and distribution terms for this software are covered by the
  *   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
  *   which can be found in the file epl-v10.html at the root of this distribution.
@@ -910,6 +910,27 @@ static class ValIterator<T> implements Iterator<T>{
 		throw new UnsupportedOperationException();
 	}
 }
+
+	@Override
+	public PersistentSortedMap<K, V> zero() {
+		return (PersistentSortedMap<K, V>) empty();
+	}
+	
+	@Override
+	public PersistentSortedMap<K, V> plus(K key, V val) {
+		return assoc(key, val);
+	}
+	
+	@Override
+	public PersistentSortedMap<K, V> plusEx(K key, V val) {
+		return assocEx(key, val);
+	}
+	
+	@Override
+	public PersistentSortedMap<K, V> minus(K key) {
+		return without(key);
+	}
+
 /*
 static public void main(String args[]){
 	if(args.length != 1)

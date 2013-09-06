@@ -12,7 +12,7 @@
 
 package com.trifork.clj_lang;
 
-public interface ITransientVector<T> extends ITransientCollection<T>, Indexed<T>{
+public interface ITransientVector<T> extends ITransientAssociative, Indexed<T>{
 
 ITransientVector<T> assocN(int i, T val);
 

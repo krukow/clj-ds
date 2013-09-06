@@ -2,20 +2,19 @@ package com.trifork.clj_ds;
 
 import java.util.List;
 
-import com.trifork.clj_lang.IEditableCollection;
-import com.trifork.clj_lang.IPersistentVector;
-
-public interface PersistentVector<E> extends IPersistentVector<E>, PersistentStack<E>, List<E>, Comparable<E>, IEditableCollection<E> {
+public interface PersistentVector<E> extends PersistentStack<E>, List<E>, Indexed<E>, Comparable<E>, EditableCollection<E> {
 	
-	PersistentVector<E> cons(E o);
+	PersistentVector<E> zero();
 
-	PersistentVector<E> empty();
+	PersistentVector<E> plus(E o);
 
+	PersistentVector<E> minus();
+	
 	PersistentVector<E> pop();
 	
-	PersistentVector<E> assocN(int i, E val);
+	PersistentVector<E> plusAll(Iterable<? extends E> others);
 	
-	PersistentVector<E> consAll(Iterable<? extends E> others);
+	PersistentVector<E> plusN(int i, E val);
 	
 	TransientVector<E> asTransient();
 	

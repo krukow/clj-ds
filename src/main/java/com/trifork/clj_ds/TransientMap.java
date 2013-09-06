@@ -1,13 +1,12 @@
 package com.trifork.clj_ds;
 
-import com.trifork.clj_lang.ITransientMap;
 
-public interface TransientMap<K, V> extends ITransientMap<K, V> {
+public interface TransientMap<K, V> {
 
-	TransientMap<K,V> assoc(K key, V val);
+	TransientMap<K,V> plus(K key, V val);
 
-	TransientMap<K,V> without(K key);
+	TransientMap<K,V> minus(K key);
 
-	PersistentMap<K,V> persistentMap();
+	PersistentMap<K,V> persist();
 	
 }

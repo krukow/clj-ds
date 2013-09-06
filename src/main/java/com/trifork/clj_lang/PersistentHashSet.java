@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.trifork.clj_ds.PersistentSet;
+import com.trifork.clj_ds.TransientSet;
 
 public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T>, PersistentSet<T> {
 
@@ -129,7 +130,7 @@ public PersistentHashSet<T> cons(T o){
 	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
 }
 
-public PersistentSet<T> empty(){
+public IPersistentSet<T> empty(){
 	return EMPTY.withMeta(meta());	
 }
 
@@ -145,7 +146,7 @@ public IPersistentMap meta(){
 	return _meta;
 }
 
-static final class TransientHashSet<T> extends ATransientSet<T> {
+static final class TransientHashSet<T> extends ATransientSet<T> implements TransientSet<T> {
 	TransientHashSet(ITransientMap impl) {
 		super(impl);
 	}
@@ -153,10 +154,25 @@ static final class TransientHashSet<T> extends ATransientSet<T> {
 	public PersistentHashSet<T> persistent() {
 		return new PersistentHashSet<T>(null, impl.persistentMap());
 	}
+	
+	@Override
+	public PersistentSet<T> persist() {
+		return persistent();
+	}
+	
+	@Override
+	public TransientSet<T> plus(T val) {
+		return (TransientSet<T>) conj(val);
+	}
+	
+	@Override
+	public TransientSet<T> minus(T val) {
+		return (TransientSet<T>) disjoin(val);
+	}
 }
 
 	@Override
-	public PersistentSet<T> consAll(Iterable<? extends T> others) {
+	public PersistentSet<T> plusAll(Iterable<? extends T> others) {
 		TransientHashSet<T> result = (TransientHashSet<T>) this.asTransient();
 		for (T other : others) {
 			result = (TransientHashSet<T>) result.conj(other);
@@ -165,12 +181,27 @@ static final class TransientHashSet<T> extends ATransientSet<T> {
 	}
 
 	@Override
-	public PersistentSet<T> disjoinAll(Iterable<? extends T> others) {
+	public PersistentSet<T> minusAll(Iterable<? extends T> others) {
 		TransientHashSet<T> result = (TransientHashSet<T>) this.asTransient();
 		for (T other : others) {
 			result = (TransientHashSet<T>) result.disjoin(other);
 		}
 		return (PersistentSet<T>) result.persistent();
+	}
+	
+	@Override
+	public PersistentSet<T> zero() {
+		return (PersistentSet<T>) empty();
+	}
+	
+	@Override
+	public PersistentSet<T> plus(T val) {
+		return cons(val);
+	}
+	
+	@Override
+	public PersistentSet<T> minus(T val) {
+		return disjoin(val);
 	}
 
 }

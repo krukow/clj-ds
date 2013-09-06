@@ -171,7 +171,7 @@ public IMapEntry<K,V> entryAt(K key){
 	return null;
 }
 
-public PersistentMap<K,V> assocEx(K key, V val) {
+public IPersistentMap<K,V> assocEx(K key, V val) {
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0)
@@ -191,7 +191,7 @@ public PersistentMap<K,V> assocEx(K key, V val) {
 	return create(newArray);
 }
 
-public PersistentMap<K,V> assoc(K key, V val){
+public IPersistentMap<K,V> assoc(K key, V val){
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0) //already have key, same-sized replacement
@@ -405,7 +405,7 @@ public TransientArrayMap asTransient(){
 	return new TransientArrayMap(array);
 }
 
-static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
+static final class TransientArrayMap<K,V> extends ATransientMap<K,V> implements TransientMap<K, V> {
 	int len;
 	final Object[] array;
 	Thread owner;
@@ -426,7 +426,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 		return -1;
 	}
 
-	TransientMap<K,V> doAssoc(K key, V val){
+	ITransientMap<K,V> doAssoc(K key, V val){
 		int i = indexOf(key);
 		if(i >= 0) //already have key,
 			{
@@ -488,5 +488,40 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> {
 	public IPersistentCollection persistent() {
 		return persistentMap();
 	}
+	
+	@Override
+	public PersistentMap<K, V> persist() {
+		return (PersistentMap<K, V>) persistent();
+	}
+	
+	@Override
+	public TransientMap<K, V> plus(K key, V val) {
+		return (TransientMap<K, V>) assoc(key, val);
+	}
+	
+	@Override
+	public TransientMap<K, V> minus(K key) {
+		return (TransientMap<K, V>) without(key);
+	}
+	
 }
+	@Override
+	public PersistentMap<K, V> zero() {
+		return empty();
+	}
+	
+	@Override
+	public PersistentMap<K, V> plus(K key, V val) {
+		return (PersistentMap<K, V>) assoc(key, val);
+	}
+	
+	@Override
+	public PersistentMap<K, V> plusEx(K key, V val) {
+		return (PersistentMap<K, V>) assocEx(key, val);
+	}
+	
+	@Override
+	public PersistentMap<K, V> minus(K key) {
+		return without(key);
+	}
 }
