@@ -15,6 +15,7 @@ package com.trifork.clj_lang;
 import java.util.Comparator;
 
 import com.trifork.clj_ds.PersistentSortedSet;
+import com.trifork.clj_ds.TransientCollection;
 
 public class PersistentTreeSet<T> extends APersistentSet<T> implements IObj, Reversible<T>, Sorted<T>, PersistentSortedSet<T>{
 static public final PersistentTreeSet EMPTY = new PersistentTreeSet(null, PersistentTreeMap.EMPTY);
@@ -89,23 +90,25 @@ public ISeq<T> seqFrom(T key, boolean ascending){
 public IPersistentMap meta(){
 	return _meta;
 }
-
+	
 	@Override
-	public PersistentSortedSet<T> consAll(Iterable<? extends T> others) {
-		PersistentSortedSet<T> result = this;
-		for (T other : others) {
-			result = result.cons(other);
-		}
-		return result;
+	public PersistentSortedSet<T> zero() {
+		return empty();
 	}
-
+	
 	@Override
-	public PersistentSortedSet<T> disjoinAll(Iterable<? extends T> others) {
-		PersistentSortedSet<T> result = this;
-		for (T other : others) {
-			result = result.disjoin(other);
-		}
-		return result;
+	public PersistentSortedSet<T> plus(T o) {
+		return cons(o);
+	}
+	
+	@Override
+	public PersistentSortedSet<T> minus(T key) {
+		return disjoin(key);
+	}
+	
+	@Override
+	public TransientCollection<T> asTransient() {
+		throw new UnsupportedOperationException();
 	}
 
 }

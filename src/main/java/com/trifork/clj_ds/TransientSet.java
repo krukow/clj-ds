@@ -1,13 +1,12 @@
 package com.trifork.clj_ds;
 
-import com.trifork.clj_lang.ITransientSet;
 
-public interface TransientSet<E> extends ITransientSet<E> {
+public interface TransientSet<E> extends TransientCollection<E> {
 
-	TransientSet<E> conj(E val);
+	TransientSet<E> plus(E val);
 	
-	TransientSet<E> disjoin(E key);
+	TransientSet<E> minus(E val);
 
-	PersistentSet<E> persistent();
+	PersistentSet<E> persist();
 	
 }

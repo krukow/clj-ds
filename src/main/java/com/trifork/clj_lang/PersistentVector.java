@@ -835,15 +835,46 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		return persistentMap();
 	}
 	
+	@Override
+	public com.trifork.clj_ds.PersistentVector<T> persist() {
+		return persist();
+	}
+	
+	@Override
+	public com.trifork.clj_ds.TransientVector<T> plus(T val) {
+		return conj(val);
+	}
+	
+	@Override
+	public com.trifork.clj_ds.TransientVector<T> plusN(int i, T val) {
+		return assocN(i, val);
+	}
+	
+	@Override
+	public com.trifork.clj_ds.TransientVector<T> minus() {
+		return pop();
+	}
+	
 }
+	
+	@Override
+	public com.trifork.clj_ds.PersistentVector<T> zero() {
+		return empty();
+	}
+	
+	@Override
+	public com.trifork.clj_ds.PersistentVector<T> plus(T o) {
+		return cons(o);
+	}
 
 	@Override
-	public com.trifork.clj_ds.PersistentVector<T> consAll(Iterable<? extends T> others) {
-		TransientVector<T> result = this.asTransient();
-		for (T other : others) {
-			result = result.conj(other);
-		}
-		return (com.trifork.clj_ds.PersistentVector<T>) result.persistent();
+	public com.trifork.clj_ds.PersistentVector<T> plusN(int i, T val) {
+		return assocN(i, val);
+	}
+
+	@Override
+	public com.trifork.clj_ds.PersistentVector<T> minus() {
+		return pop();
 	}
 
 /*

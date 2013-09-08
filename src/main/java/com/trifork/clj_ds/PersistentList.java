@@ -2,16 +2,12 @@ package com.trifork.clj_ds;
 
 import java.util.List;
 
-import com.trifork.clj_lang.IPersistentList;
-
-public interface PersistentList<E> extends PersistentStack<E>, List<E>, IPersistentList<E> {
+public interface PersistentList<E> extends PersistentStack<E>, List<E> {
 	
-	PersistentList<E> cons(E o);
+	PersistentList<E> zero();
 
-	PersistentList<E> empty();
+	PersistentList<E> plus(E val);
 
-	PersistentList<E> pop();
-	
-	PersistentList<E> consAll(Iterable<? extends E> others);
+	PersistentList<E> minus();
 
 }

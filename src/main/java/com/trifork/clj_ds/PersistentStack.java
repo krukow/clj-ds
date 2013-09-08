@@ -1,15 +1,13 @@
 package com.trifork.clj_ds;
 
-import java.util.Collection;
+public interface PersistentStack<E> extends PersistentCollection<E> {
 
-import com.trifork.clj_lang.IPersistentStack;
+	PersistentStack<E> zero();
 
-public interface PersistentStack<E> extends IPersistentStack<E>, Collection<E> {
-	
-	PersistentStack<E> cons(E o);
+	PersistentStack<E> plus(E o);
 
-	PersistentStack<E> empty();
+	PersistentStack<E> minus();
 
-	PersistentStack<E> pop();
-	
+	E peek();
+
 }
