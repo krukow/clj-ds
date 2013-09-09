@@ -2,14 +2,10 @@ package com.trifork.clj_ds;
 
 import java.util.Collection;
 
-import com.trifork.clj_lang.IPersistentCollection;
-
-public interface PersistentCollection<E> extends IPersistentCollection<E>, Collection<E> {
+public interface PersistentCollection<E> extends Collection<E> {
 	
-	PersistentCollection<E> cons(E o);
-
-	PersistentCollection<E> empty();
+	PersistentCollection<E> zero();
 	
-	PersistentCollection<E> consAll(Iterable<? extends E> others);
-
+	PersistentCollection<E> plus(E val);
+	
 }

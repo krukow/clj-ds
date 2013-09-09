@@ -1,15 +1,16 @@
 package com.trifork.clj_ds;
 
-import com.trifork.clj_lang.ITransientVector;
 
-public interface TransientVector<E> extends ITransientVector<E> {
+public interface TransientVector<E> extends TransientCollection<E>, Indexed<E> {
 
-	TransientVector<E> conj(E val);
+	TransientVector<E> plus(E val);
 	
-	TransientVector<E> assocN(int i, E val);
+	TransientVector<E> plusN(int i, E val);
 
+	TransientVector<E> minus();
+	
 	TransientVector<E> pop();
 
-	PersistentVector<E> persistent();
+	PersistentVector<E> persist();
 	
 }

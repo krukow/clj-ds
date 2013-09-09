@@ -45,24 +45,24 @@ PersistentList(IPersistentMap meta, T _first, PersistentList<T> _rest, int _coun
 }
 
 public static <T> com.trifork.clj_ds.PersistentList<T> create(T... init){
-	com.trifork.clj_ds.PersistentList<T> ret = emptyList();
+	IPersistentList<T> ret = emptyList();
 	for(int i = init.length-1; i>=0; i--)
 		{
-		ret = ret.cons(init[i]);
+		ret = (IPersistentList<T>) ret.cons(init[i]);
 		}
-	return ret;
+	return (com.trifork.clj_ds.PersistentList<T>) ret;
 }
 
 public static <T> com.trifork.clj_ds.PersistentList<T> create(Iterable<? extends T> init) {
 	PersistentVector<T> initVector = PersistentVector.create(init);
-	return create(initVector);
+	return (com.trifork.clj_ds.PersistentList<T>) create(initVector);
 }
 
-public static <T> com.trifork.clj_ds.PersistentList<T> create(List<? extends T> init){
-	com.trifork.clj_ds.PersistentList<T> ret = emptyList();
+public static <T> IPersistentList<T> create(List<? extends T> init){
+	IPersistentList<T> ret = emptyList();
 	for(ListIterator<? extends T> i = init.listIterator(init.size()); i.hasPrevious();)
 		{
-		ret = ret.cons(i.previous());
+		ret = (IPersistentList<T>) ret.cons(i.previous());
 		}
 	return ret;
 }
@@ -81,7 +81,7 @@ public T peek(){
 	return first();
 }
 
-public com.trifork.clj_ds.PersistentList<T> pop(){
+public IPersistentList<T> pop(){
 	if(_rest == null)
 		return EMPTY.withMeta(_meta);
 	return _rest;
@@ -299,24 +299,44 @@ public Object reduce(IFn f, Object start) {
 	public boolean addAll(int index, Collection c){
 		throw new UnsupportedOperationException();
 	}
-
-		@Override
-		public com.trifork.clj_ds.PersistentList<T> consAll(Iterable<? extends T> others) {
-			return PersistentList.consAll(this, others);
-		}
+		
+	@Override
+	public com.trifork.clj_ds.PersistentList<T> zero() {
+		return this;
+	}
+	
+	@Override
+	public com.trifork.clj_ds.PersistentList<T> plus(T val) {
+		return cons(val);
+	}
+	
+	@Override
+	public com.trifork.clj_ds.PersistentList<T> minus() {
+		return pop();
+	}
 
 }
-    
-	@Override
-	public com.trifork.clj_ds.PersistentList<T> consAll(Iterable<? extends T> others) {
-		return consAll(this, others);
-	}
 	
 	public static <T> com.trifork.clj_ds.PersistentList<T> consAll(com.trifork.clj_ds.PersistentList<T> list, Iterable<? extends T> others) {
 		for (T other : others) {
-			list = list.cons(other);
+			list = list.plus(other);
 		}
 		return list;
+	}
+	
+	@Override
+	public com.trifork.clj_ds.PersistentList<T> zero() {
+		return empty();
+	}
+	
+	@Override
+	public com.trifork.clj_ds.PersistentList<T> plus(T val) {
+		return cons(val);
+	}
+	
+	@Override
+	public com.trifork.clj_ds.PersistentList<T> minus() {
+		return (com.trifork.clj_ds.PersistentList<T>) pop();
 	}
 
 }
