@@ -837,7 +837,7 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 	
 	@Override
 	public com.trifork.clj_ds.PersistentVector<T> persist() {
-		return persist();
+		return persistent();
 	}
 	
 	@Override
