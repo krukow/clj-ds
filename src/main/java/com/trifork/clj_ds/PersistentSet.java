@@ -8,6 +8,10 @@ public interface PersistentSet<E> extends PersistentCollection<E>, Set<E>, Edita
 
 	PersistentSet<E> plus(E val);
 
+	/**
+	 * @return A new {@link PersistentSet} that consists of the elements of the
+	 *         current {@link PersistentSet} without the value val.
+	 */
 	PersistentSet<E> minus(E val);
 
 }
