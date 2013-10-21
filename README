@@ -1,6 +1,6 @@
 This library has been extracted from the master branch of Clojure (http://clojure.org)
 
-version 1.2 (as of May 2010)
+version 1.5.1 (as of October 2013)
 
 http://github.com/richhickey/clojure
 
@@ -16,7 +16,7 @@ Maven
 <dependency>
   <groupId>com.github.krukow</groupId>
   <artifactId>clj-ds</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.4</version>
 </dependency>
 
 
