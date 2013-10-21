@@ -18,9 +18,6 @@ import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jsr166y.ForkJoinPool;
-import jsr166y.RecursiveTask;
-
 public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>, com.trifork.clj_ds.PersistentVector<T>{
 
 static class Node implements Serializable {
@@ -877,142 +874,9 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 		return pop();
 	}
 
-/*
-static public void main(String[] args){
-	if(args.length != 3)
-		{
-		System.err.println("Usage: PersistentVector size writes reads");
-		return;
-		}
-	int size = Integer.parseInt(args[0]);
-	int writes = Integer.parseInt(args[1]);
-	int reads = Integer.parseInt(args[2]);
-//	Vector v = new Vector(size);
-	ArrayList v = new ArrayList(size);
-//	v.setSize(size);
-	//PersistentArray p = new PersistentArray(size);
-	PersistentVector p = PersistentVector.EMPTY;
-//	MutableVector mp = p.mutable();
-
-	for(int i = 0; i < size; i++)
-		{
-		v.add(i);
-//		v.set(i, i);
-		//p = p.set(i, 0);
-		p = p.cons(i);
-//		mp = mp.conj(i);
-		}
-
-	Random rand;
-
-	rand = new Random(42);
-	long tv = 0;
-	System.out.println("ArrayList");
-	long startTime = System.nanoTime();
-	for(int i = 0; i < writes; i++)
-		{
-		v.set(rand.nextInt(size), i);
-		}
-	for(int i = 0; i < reads; i++)
-		{
-		tv += (Integer) v.get(rand.nextInt(size));
-		}
-	long estimatedTime = System.nanoTime() - startTime;
-	System.out.println("time: " + estimatedTime / 1000000);
-	System.out.println("PersistentVector");
-	rand = new Random(42);
-	startTime = System.nanoTime();
-	long tp = 0;
-
-//	PersistentVector oldp = p;
-	//Random rand2 = new Random(42);
-
-	MutableVector mp = p.mutable();
-	for(int i = 0; i < writes; i++)
-		{
-//		p = p.assocN(rand.nextInt(size), i);
-		mp = mp.assocN(rand.nextInt(size), i);
-//		mp = mp.assoc(rand.nextInt(size), i);
-		//dummy set to force perverse branching
-		//oldp =	oldp.assocN(rand2.nextInt(size), i);
-		}
-	for(int i = 0; i < reads; i++)
-		{
-//		tp += (Integer) p.nth(rand.nextInt(size));
-		tp += (Integer) mp.nth(rand.nextInt(size));
-		}
-//	p = mp.immutable();
-	//mp.cons(42);
-	estimatedTime = System.nanoTime() - startTime;
-	System.out.println("time: " + estimatedTime / 1000000);
-	for(int i = 0; i < size / 2; i++)
-		{
-		mp = mp.pop();
-//		p = p.pop();
-		v.remove(v.size() - 1);
-		}
-	p = (PersistentVector) mp.immutable();
-	//mp.pop();  //should fail
-	for(int i = 0; i < size / 2; i++)
-		{
-		tp += (Integer) p.nth(i);
-		tv += (Integer) v.get(i);
-		}
-	System.out.println("Done: " + tv + ", " + tp);
-
-}
-//  */
-
 public static IPersistentVector vectormap(IFn f, PersistentVector v) {
 	return new PersistentVector(v._meta,v.cnt,v.shift,v.root,Util.ret1(v.tail,v=null),f);
 }
-static final ForkJoinPool mainPool = new ForkJoinPool();
-
-public static IPersistentVector pvectormap(IFn f, PersistentVector v) {
-	Node invoke = mainPool.invoke(new PMapTask(f, v.shift,v.root));
-	return new PersistentVector(v._meta,v.cnt,v.shift,invoke, mapArray(f,v.tail));
-}
-
-static final class PMapTask extends RecursiveTask<Node> {
-   
-	private IFn f;
-	private int shift;
-	private Node node;
-
-	public PMapTask(IFn f, int shift, Node node) {
-		this.f = f;
-		this.shift = shift;
-		this.node = node;
-	}
-   
-	public Node compute() {
-		if (node == null) {
-			return null;
-		}
-	   if (this.shift <= 5) {
-		   return mapNode(f,node,shift);
-	   }
-
-	   PMapTask[] tasks = new PMapTask[node.array.length];
-	   shift -= 5;
-	   for (int i=0;i<tasks.length;i++) {
-		   tasks[i] = new PMapTask(f,shift,(Node) node.array[i]);
-	   }
-	   invokeAll(tasks);
-	   Node[] nodes = new Node[node.array.length];
-	   try {
-		   for (int i=0;i<tasks.length;i++) {  
-				nodes[i] = tasks[i].get();
-		   }
-		   return new Node(null,nodes);
-	   } catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new RuntimeException(e);
-		} catch (ExecutionException e) {
-			throw new RuntimeException(e);
-		}
-   }
-}	
 
 private static Object[] mapArray(IFn f, Object[] arr) {
 	Object[] res = new Object[arr.length];
