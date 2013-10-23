@@ -3,7 +3,7 @@
     <groupId>com.github.krukow</groupId>
     <artifactId>clj-ds</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.4</version>
     <name>clj-ds</name>
     <url>http://github.com/krukow/clj-ds</url>
     <description>
@@ -50,12 +50,6 @@
     </distributionManagement>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.codehaus.jsr166-mirror</groupId>
-            <artifactId>jsr166y</artifactId>
-            <version>1.7.0</version>
-        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
